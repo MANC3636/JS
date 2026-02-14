@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Times Table</title>
+        <style>
+            canvas{border: 1px solid blueviolet;}
+        </style>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <div class="header-row">
+            <div class="header-col">
+                <h1>Murach Pong (Multiplication)</h1>
+            </div>
+            <div class="header-col">
+                <h1>Aside</h1>
+                <p style='color: blue;'>Answer the questions, then play Pong. <br>
+                Get three questions right<br>
+                and go return to the fun. </p>
+            </div>
+                   </div>
+         <!----------the game----------------------------------------------->
+
+        <div class="row">
+            <div class="col">
+                <h1 id="info"></h1>
+                <button type="button" id="start" style="display: none" >Click to start game</button>
+                <canvas id="canvas" width="500px" height="500">
+                    Pong display
+                </canvas>
+        <script src="pong.js" type="module"></script> 
+            </div>
+
+            <!------------------------the math------------------------------------>
+
+            <div class="col">                               
+                
+                <!-------------------Q1-------------------->
+        <p id="phraseA" class="question">... </p><p id="phraseB">...</p>
+        <input  id="input1"   type="text" name="ans1" placeholder="2X2=4" >
+        <button id="mysubmit1"> submit</button>     
+        <p id="response1">...</p>
+
+                <!-------------------Q2------------------->
+
+        <p id="phraseC" class="question">... </p><p id="phraseD">...</p>
+        <input  id="input2"   type="text" name="ans1" placeholder="5x5=25" >
+        <button id="mysubmit2"> submit</button>
+        <p id="response2">...</p>
+
+                <!-------------------Q3------------------->
+                
+        <p id="phraseE" class="question">... </p><p id="phraseF">...</p>
+        <input  id="input3"   type="text" name="ans1" placeholder="7x6=42" >
+        <button id="mysubmit3"> submit</button>
+        <p id="response3">...</p>
+
+
+
+
+        
+        <script src="pong.js" type="module"></script>
+
+
+
+            </div>
+       <!----<script src="kilometers.js"></script>-----> 
+       <link rel="stylesheet" href="main.css">
+            </div>
+    </body>
+
+
+</html>

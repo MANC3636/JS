@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-------------I need three fieldsets (put in input coding) for question and then modify js-->
+<!-------I might not need three fieldsets, the numbers (thanks button/submit automatically reset-->
+<!-------Maybe, I'll see if I can just add an input, link it a button and move on-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
+    
+    <h1>Math Pong Game Prototype: EventListener Study</h1>
+    <p>I had to do this study b/c I was having trouble with the eventlistener.<br> 
+        In particular, I need to figure <br>
+         <a href="https://www.w3schools.com/jsref/met_document_addeventlistener.asp"> how to use parametered funcs</a> <br>
+        in an eventlistener. W3Schools seems to have the answer: <br>
+        use anon func & allow it to be called upon the trigger  <br>
+    will pursue <a href="https://dev.to/jmjkim/how-to-keep-input-values-even-after-reloading-your-browser-4mm5"> countering outside the game.</a> </p>
+</head>
+<body>
+    <form >
+        <fieldset id="question1">
+            <p id="display1">test question</p>
+            <input id="inputbox1"  type="text"  placeholder="hint: find the numbers to add">
+            <p id="display_sum1">the sum goes here --- </p>           
+            <button type="button" id="changing1">press here</button>           
+             <br>
+            <p id="display_ans1">Waiting for something to do </p>
+            <p id="response1">I wanna tell you if your ans is right or wrong </p>
+             <button type="submit" id="threading1">push me to reset</button>         
+        </fieldset>
+        <!------------------------------------------------------------------------------------->
+        <fieldset id="question2">
+            <p id="display2">test question</p>
+            <input id="inputbox2"  type="text"  placeholder="hint: find the numbers to add">
+            <p id="display_sum2">the sum goes here --- </p>           
+            <button type="button" id="changing2">press here</button>           
+             <br>
+            <p id="display_ans2">Waiting for something to do </p>
+            <p id="response2">I wanna tell you if your ans is right or wrong </p>
+             <button type="submit" id="threading2">push me to reset</button>         
+        </fieldset>
+        <!------------------------------------------------------------------------------------->
+        <fieldset id="question3">
+            <p id="display3">test question</p>
+            <input id="inputbox3"  type="text"  placeholder="hint: find the numbers to add">
+            <p id="display_sum3">the sum goes here --- </p>           
+            <button type="button" id="changing3">press here</button>           
+             <br>
+            <p id="display_ans3">Waiting for something to do </p>
+            <p id="response3">I wanna tell you if your ans is right or wrong </p>
+             <button type="submit" id="threading3">push me to reset</button>         
+        </fieldset>
+        <!---------------------------------------------------------------------->
+        <p id="correctAns">keeping the num of correct answers here</p>
+        <button type="button" id="triggering"  style="display: inline;">You have 3 points; click me to reveal game trigger</button>
+        <!--------------------------------------------------------------------------------------->
+
+
+    
+    
+    </form>
+    
+</body>
+<script  src="pong1.js" type="module" ></script>
+
+
+    
+</html>

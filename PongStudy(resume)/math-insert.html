@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<!-------------I need three fieldsets (put in input coding) for question and then modify js-->
+<!-------I might not need three fieldsets, the numbers (thanks button/submit automatically reset-->
+<!-------Maybe, I'll see if I can just add an input, link it a button and move on-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    
+    <h1>Toy JS</h1>
+    <p>this is a study of (1) button, (2) input & <br> 
+        both  (3a) getElementbyID  & (3b) addEventListener. <br>
+        A huge takeaway is button (type submit has reset functionality) <br>
+        button (type button has no functionality until addEventListener) </p>
+</head>
+<body>
+    <form >
+        <fieldset>
+            <p id="display">test</p>
+            <input id="inputbox"  type="text"  placeholder="hint: this is addition">
+            <p id="display_sum">Sum here </p>           
+            <button type="button" id="changing">press hanging</button>           
+             <br>
+            <p id="display_ans"> </p>
+             <button type="submit" id="threading">push me to reset</button>         
+        </fieldset>
+
+        <fieldset>
+            <h1>Module Study </h1>
+            <h3>using radius to get Circumference</h3>
+            <label for="radius">Get Circumference</label>
+            <input id="getRadius"  type="text"  placeholder="I need a radius for the circumference">
+            <p id="showCircumference"...></p>          
+            <button type="button" id="calculate">Calculate Circumference</button>           
+             <br>
+            <p id="showRad"> ...</p>
+             <button type="submit" id="reset">push me to reset</button>         
+        </fieldset>
+
+        <script  src="insert.js"></script>
+    </form>
+    
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+
+    <section class="thresholdClass" id="threshold" >
+        <fieldset class="threshold" id="thresholdFS" >
+        
+            <legend>Threshold questions</legend>
+            <div name="DMV?">
+                <p>Will the child live in DMV?</p>
+                <label for="yes">yes</label>
+                <input type="checkbox" value="Yes">
+                <label for="no">no</label>
+                <input type="checkbox" value="No">  
+            </div>
+
+            <div name="11th or 12th?">
+                <p>During academic year 2025-26, will the child <br>
+                be a high school junior or senior?</p>
+                <label for="yes">yes</label>
+                <input type="checkbox" value="Yes">
+                <label for="no">no</label>
+                <input type="checkbox" value="No">       
+            </div>
+
+            <div name="BSFSchool?">
+                <p>Is the child interested in one of BSF's 53 member schools? <br>
+                please find the list <a href="https://www.blackstudentfund.org/bsf-member-schools">here</a>
+                </p>
+                <label for="yes">yes</label>
+                <input type="checkbox" value="Yes">
+                <label for="no">no</label>
+                <input type="checkbox" value="No">
+            </div>
+
+            <style>fieldset{background-image: url('BSFlogo.png');
+                    background-repeat: no-repeat;
+                    background-size: 20% ;
+                    opacity: .5;
+                    position: right;}</style>
+            </fieldset>
+
+</section>
+<section>
+    <fieldset class="Individual_info" id="ind_info" >
+        <!---<img src="BSFlogo.png" alt="">-->
+        <legend>Individual Information</legend>
+        <div name="Parent/Guardian_name">
+            <p>Parent/Guardian Name</p>
+            <label for="Saluation">Mrs.</label>
+            <input type="checkbox" value="Mrs.">
+
+            <label for="Saluation">Mr.</label>
+            <input type="checkbox" value="Mr.">
+
+            <label for="Saluation">Ms.</label>
+            <input type="checkbox" value="Ms.">
+            
+            <hr>
+            <label for="lname">Last Name</label>
+            <input type="text" value="first_name">
+            
+            <label for="fname">First Name</label>
+            <input type="text" value="last_name">
+                       
+            
+
+            
+        </div>
+        <div name="child_name/info">
+            <p>Child's Information </p>
+            
+            <label for="lname">Child's Last Name</label>
+            <input type="text" value="first_name">
+            
+            <label for="fname">Child's First Name</label>
+            <input type="text" value="last_name">
+            <br>
+            <br>
+
+                       
+            <label for="school">Child's current School</label>
+            <input type="text" value="current school/none">
+            <label for="grade">Child's current grade</label>
+            <input type="text" value="grade">
+                       
+            <label for="birthday"> Child's Birthday</label>
+            <input type="date" name="cbirth" id="birthday">
+                       
+            
+
+            
+        </div>
+        
+
+        <style>fieldset{background-image: url('BSFlogo.png');
+                        background-repeat: no-repeat;
+                        background-size: 20% ;
+                        opacity: .5;
+                        position: right;}</style>
+    </fieldset>
+    
+            
+           
+
+    </section>
+    
+</body>
+</html>

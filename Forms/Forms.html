@@ -1,0 +1,71 @@
+<<!DOCTYPE html>
+<html> 
+<head>
+    <meta charset="UTF-8" />
+    <title>This is prototype game</title>
+    <link rel="stylesheet" href="style1.css">
+</head>
+<body>
+    <section class="problems">
+        <h1>the problems</h1>
+        <p>This is how we solve tehse problems</p>
+        <div class="row">
+            <div class="course-col">
+                <h3>Problem1</h3>
+                <p id="first"> A boy has 2 boxes
+                    he gets two more boxes
+                    how mmany does he have now?                   .
+                </p>
+                <aside>This is <br>an aisde.</br> 
+                     
+                    What's that?</aside>
+                
+                <input id="userInput1" type="text"><br>
+                <button onclick="new_problem('first')">new problem</button>
+                <h1 id="message1">  </h1>
+                <button onclick="Get_Info('#message1', '#userInput1')">submit</button>
+
+            </div>
+            
+           
+            <div class="course-col">
+                <h3>Problem2</h3>
+                <p id="second"> A boy has five pennies.  
+                    He gets three more pennies.  
+                    How many pennies does he have now?
+                </p>
+                <input id="userInput2" type="text"><br>
+               
+                <button onclick="new_problem('second')">new problem</button> 
+                <h1 id="message2">  </h1>
+                 <button onclick="Get_Info('#message2', '#userInput2')">submit</button>
+                 <script src="https://cdn.babylonjs.com/viewer/babylon.viewer.js"></script>
+                <!--<babylon model="Path to File"></babylon>--->
+            </div>
+            <div class="course-col">
+                <h3>problem3</h3>
+                <p id="third"> A boy has three pieces of cake.  He gets no more.
+                    How many pieces of cake does he have?
+                </p>
+                <input id="userInput3" type="text"><br>
+               
+                <h1 id="message3">  </h1>
+                 <button onclick="Get_Info('#message3', '#userInput3')">submit</button>
+                <script src="script.js"></script>          
+                <button onclick="new_problem('third')">new problem</button>  
+            </div>
+            
+            <script>"script.js"
+                //function new_problem(problem){
+                    //document.getElementById(problem).innerHTML="your answer is "}
+                
+            </script>
+        </div>
+
+
+    </section>
+
+
+   
+</body>
+</html>

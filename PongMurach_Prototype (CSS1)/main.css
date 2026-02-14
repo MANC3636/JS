@@ -1,0 +1,23 @@
+.row{display: flex;
+background-color: rgba(70, 49,37, .1);}
+
+
+.col{flex: 50%;
+border-radius: 50%;}
+
+.header-row{display: flex;
+background-color: rgba(207, 16, 16,.7);}
+
+
+.header-col{flex: 50%;
+border-radius: 10%;
+background-color: rgba(70, 49,37, .1);
+font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;}
+
+body {
+    background-color: rgba(207, 116, 116,.1);
+    color:rgba(0,0,200, .9);
+    font-family: 'Times New Roman', Times, sans-serif;
+    font-size: 30px;
+    font-weight: 600;
+}
