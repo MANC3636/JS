@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Search to loops and conditionals</title>
+</head>
+<body>
+    <div id="container">
+
+        <h1>Simple Search to loops and conditionals</h1>
+        <p>In this project, we will create a simple search function that allows users to search for items in a list. We will use loops and conditionals to implement the search functionality.</p>
+
+        <h2>Step 1: Create a List of Items</h2>
+        <p>First, we need to create a list of items that we want to search through. For example, we can create a list of fruits:</p>
+        <ul>
+            <li>Apple</li>
+            <li>Banana</li>
+            <li>Cherry</li>
+            <li>Date</li>
+            <li>Elderberry</li>
+        </ul>
+
+        <h2>Step 2: Create a Search Function</h2>
+        <p>Next, we will create a search function that takes a search term as input and checks if it exists in the list of items. We will use a loop to iterate through the list and a conditional statement to check for a match.</p>
+
+        <h2>Step 3: Display the Results</h2>
+        <p>If the search term is found in the list, we will display a message indicating that the item was found. If it is not found, we will display a message indicating that the item was not found.</p>
+        
+        <div id="searchSection" 
+             style="border: 1px solid black; padding: 10px; margin-top: 20px; width: 400px;">
+            <h2>Try the Search Function</h2>
+            <input type="text" id="searchInput" placeholder="Input widget. Enter a fruit to search"><!-- input widget -->
+            <button onclick="searchFruit()">Use the input widget to Search</button>
+            
+            <p id="result">Your answer will appear here.</p>
+        </div>
+    </div>
+    
+    <script>
+const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const fruits = ['apple', 'banana', 'cherry', 'date', 'elderberry'];
+            let found = false;
+
+            for (let i = 0; i < fruits.length; i++) {
+                if (fruits[i] === searchTerm) {
+                    found = true;
+                    break;
+                }
+            }
+
+            const resultElement = document.getElementById('result');
+            if (found) {
+                resultElement.textContent = `The item "${searchTerm}" was found in the list.`;
+            } else {
+                resultElement.textContent = `The item "${searchTerm}" was not found in the list.`;
+            }
+/* 
+        function searchFruit() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const fruits = ['apple', 'banana', 'cherry', 'date', 'elderberry'];
+            let found = false;
+
+            for (let i = 0; i < fruits.length; i++) {
+                if (fruits[i] === searchTerm) {
+                    found = true;
+                    break;
+                }
+            }
+
+            const resultElement = document.getElementById('result');
+            if (found) {
+                resultElement.textContent = `The item "${searchTerm}" was found in the list.`;
+            } else {
+                resultElement.textContent = `The item "${searchTerm}" was not found in the list.`;
+            }
+        } */
+    </script>
+</body>
+</html>

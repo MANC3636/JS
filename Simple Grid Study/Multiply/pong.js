@@ -13,7 +13,7 @@ function ball_mvt(ball, paddle, player, midX){
         const isLeftOfPaddle =ball.x < paddle.x;
         const isRightOfPaddle=ball.x> paddle.x + paddle.len;
         if (isLeftOfPaddle || isRightOfPaddle){
-            ball.x=midX; ball.y=0; ball.speedX=1; ball.speedY= 5;
+            ball.x=midX; ball.y=0; ball.speedX=1, ball.speedY= 5;
             player.hits=0;          
             }
         else{ball.speedY=-ball.speedY;
@@ -41,21 +41,16 @@ var correct_count=0;
 //odd syntax to get the value
 function getting_right_ans(button, ans, numA, numB, response){
         
-        button.addEventListener('click', ()=>{   
+        button.addEventListener('click', function(){   
     
-        if (parseInt(ans.value.trim())==numA*numB){       
-                response.classList.add("bounce");
-                response.innerHTML="That is the correct answer";
-                response.classList.remove("bounce");
-                void response.offsetWidth; // Trigger reflow
-                
-                correct_count++;
-                console.log(correct_count)
-                if (correct_count==3){funBtn.style.display="inline";
-                    info_to_player.innerHTML=" Refresh page, and play More!!";
-                }
+    if (ans.value==numA*numB){response.innerHTML="that is the correct answer";
+        correct_count++;
+        console.log(correct_count)
+        if (correct_count==3){funBtn.style.display="inline";
+            info_to_player.innerHTML=" Refresh page, and play More!!";
+        }
             }
-    else{response.innerHTML="Try using pen & paper";}
+    else{response.innerHTML="try adding on paper";}
         
 })}
 
@@ -65,15 +60,14 @@ var r_w2=getting_right_ans(button2, ans2, num3, num4, Response2)
 var r_w3=getting_right_ans(button3, ans3, num5, num6, Response3)
 
 
-function game1(){game();//func holding the game
-    funBtn.style.display="none"}
+function game1(){game();
+    funBtn.style.display="none"}//func holding the game
 
 function game () {//the game
 //first let's get the canvas and context
 const canvas=document.querySelector("canvas") //canvas did not need an id; maybe b/s there's only one
 const context=canvas.getContext("2d");
 
-//let's set up some variables
 const midX=canvas.width/2
 //now let's declare the ball, paddle & player & their starting values
 let ball={x:midX, y:0, speedX:1, speedY: 5}//why is the ball a var, but the paddle a const?
@@ -90,10 +84,9 @@ const render=()=> {
         ball_mvt(ball, paddle, player, midX);
         ball.x=ball.x+ball.speedX;
         ball.y=ball.y+ball.speedY;}
-    else { player.hits=player.hits;
+    else { player.hits=11;
         info_to_player.innerHTML="Refresh page; then answer questions to right"
-        ball.y=0,
-        ball_mvt( ball, paddle, player, midX);   
+        ball_mvt(ball.y=0, paddle, player, midX);   
         ball.x=ball.x+ball.speedX;
         ball.y=ball.y+ball.speedY;
 
@@ -117,10 +110,11 @@ const render=()=> {
 
     //draw hit count and high score
     context.font="20px sans-serif";
+    context.fillStyle='white'
     context.fillText("Hits: " + player.hits, 20, paddle.y+30);
-    context.fillText("High score: " + player.hightscore, 
-        canvas.width-140, paddle.y+30);
-    
+    //context.fillText("High score: " + player.hightscore, canvas.width-140, player.y+30);
+    context.strokeStyle='purple';
+    context.strokeText("Hits: " + player.hits, 20, paddle.y+30);
 
     //continue animation
     requestAnimationFrame(render);

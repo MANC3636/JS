@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Grid Study</title>
+</head>
+<body>
+   <!--  //4x4 grid, but first row spans 4 columns -->
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(4, 1fr); gap: 10px; height: 50vh;">
+        <div style="grid-column: span 2; background-color: lightblue;">Header (spans 2 columns)</div>
+        <div style="background-color: lightcoral;">Item 1</div>
+        <div style="background-color: lightgreen;">Item 2</div>
+        <div style="background-color: lightpink;">Item 3</div>
+        <div style="grid-column: span 2; background-color: lightyellow;">Item 4</div>
+        <div style="background-color: lightyellow;">Item 5</div>
+        <!-- Nested grid inside Item 5 -->
+        <div id="subcontainer" style="display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); gap: 10px;">
+            <div style="background-color: rgb(27, 13, 13);">Item 6</div>
+            <div style="background-color: lightgreen;">Item 7</div>
+            <div style="background-color: rgb(37, 9, 13);">Item 8</div>
+            <div style="background-color: lightyellow;">Item 9</div>
+        </div>
+        <div style="background-color: lightyellow;">Item 10</div>
+        <div style="background-color: lightcoral;">Item 11</div>
+        <div style="background-color: rgb(9, 15, 9);">Item 12</div>
+        <div style="background-color: rgb(17, 8, 9);">Item 13</div>
+        <div style="background-color: rgb(90, 90, 11);">Item 14</div>
+        <div style="grid-column: span 2;    background-color: rgb(173, 173, 155);">Item 15</div>
+    <script src="script.js"></script>
+</body>
+</html>
