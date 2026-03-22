@@ -1,0 +1,19 @@
+
+        const items = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry'];
+/* 
+        const list = document.getElementById('myList');
+
+        items.forEach(item => {
+            const li = document.createElement('li');
+            li.textContent = item;
+            list.appendChild(li);
+        }); */
+
+        const displayItem = document.getElementById('displayItem');//see line 9
+        
+        let text = '';
+        for (let i = 0; i < items.length; i++) {
+            text += items[i] + ' ';
+        }
+        // displayItem.textContent = text;
+        displayItem.innerHTML=text
