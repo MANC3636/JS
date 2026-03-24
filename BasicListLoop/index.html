@@ -5,9 +5,23 @@
     <title>Basic List Loop</title>
 </head>
 <body>
-    <ul id="myList"></ul>
-    <p id="displayItem"></p>
-
+    <dir style="display: grid;grid-template-columns: repeat(3, 1fr);">
+        <dir style="background-color: lightblue; padding: 10px; border: 1px solid black;"> 
+            <ul id="myList"></ul>
+            <p id="displayItem"></p>
+    
+        </dir>
+        <dir style="background-color: lightgreen; padding: 10px; border: 1px solid black;"> 
+           
+            <p id="displayItem" style="color: brown;">second  commit</p>
+    
+        </dir>
+        <dir style="background-color: lightyellow; padding: 10px; border: 1px solid black;"> 
+            
+            <p id="displayItem">branch 2d-commi</p>
+    
+        </dir>
+    </dir>
     <script>
         const items = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry'];
 /* 
@@ -25,6 +39,8 @@
         for (let i = 0; i < items.length; i++) {
             text += items[i] + ' ';
         }
+        
+
         // displayItem.textContent = text;
         displayItem.innerHTML=text
     </script>
