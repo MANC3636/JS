@@ -13,36 +13,38 @@
         </dir>
         <dir style="background-color: lightgreen; padding: 10px; border: 1px solid black;"> 
            
-            <p id="displayItem" style="color: brown;">second  commit</p>
+            <p id="displayItem1" style="color: brown;">second  commit</p>
     
         </dir>
         <dir style="background-color: lightyellow; padding: 10px; border: 1px solid black;"> 
             
-            <p id="displayItem">branch 2d-commi</p>
+            <p id="displayItem2">branch 2d-commi</p>
     
         </dir>
     </dir>
-    <script>
-        const items = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry'];
-/* 
+    <script src="listLoopStudy.js">
+       /*  const items = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry'];
+
         const list = document.getElementById('myList');
 
         items.forEach(item => {
             const li = document.createElement('li');
             li.textContent = item;
             list.appendChild(li);
-        }); */
+        }); 
 
         const displayItem = document.getElementById('displayItem');//see line 9
         
         let text = '';
         for (let i = 0; i < items.length; i++) {
-            text += items[i] + ' ';
+               items[i];
+
+            //text += items[i] + ' ';
         }
         
 
         // displayItem.textContent = text;
-        displayItem.innerHTML=text
+        displayItem.innerHTML=text*/
     </script>
 </body>
 </html>
