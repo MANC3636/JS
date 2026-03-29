@@ -35,5 +35,7 @@
                     }
             }
         // displayItem.textContent = text;
+
+        items.filter(item => item.length > 5).forEach(item => text += item + '? ');
         
-        displayItem.innerHTML=text+ text1
+        displayItem.innerHTML=text1+ text
