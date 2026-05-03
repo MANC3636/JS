@@ -29,6 +29,7 @@
             
                 if (items[i].length > 6) {
                   if (berries.includes(items[i])) 
+                    
                         { 
                             displayItem.style.color = 'red';                   
                          text1 += " "+items[i] + '!';}

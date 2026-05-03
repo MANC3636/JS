@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Addition Arcade Quiz</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Addition Arcade Quiz</h1>
+      <p>Solve three addition problems correctly to play Pong or Snake for 2 minutes.</p>
+    </header>
+
+    <section id="quiz-screen" class="card">
+      <div id="question-bank">
+        <h2>Answer all 3 questions</h2>
+        <div id="questions"></div>
+        <button id="submit-btn">Submit Answers</button>
+        <div id="quiz-feedback" class="feedback"></div>
+      </div>
+    </section>
+
+    <section id="game-choice-screen" class="card hidden">
+      <h2>Choose a game</h2>
+      <div class="game-buttons">
+        <button class="game-btn" data-game="pong">Play Pong</button>
+        <button class="game-btn" data-game="snake">Play Snake</button>
+      </div>
+    </section>
+
+    <section id="game-screen" class="card hidden">
+      <div class="game-header">
+        <h2 id="game-title"></h2>
+        <div class="timer">Time left: <span id="timer">02:00</span></div>
+      </div>
+      <canvas id="game-canvas" width="600" height="400"></canvas>
+      <div class="instructions" id="game-instructions"></div>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
