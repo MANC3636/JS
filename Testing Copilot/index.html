@@ -3,17 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Addition Arcade Quiz</title>
+  <title>Math Arcade Quiz</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>Addition Arcade Quiz</h1>
-      <p>Solve three addition problems correctly to play Pong or Snake for 2 minutes.</p>
+      <h1>Tantalus, the Math Arcade</h1>
+      <p>Solve the math problems correctly to play Pong, Snake, Pacman, or other game for 2 minutes.</p>
     </header>
 
-    <section id="quiz-screen" class="card">
+    <section id="grade-screen" class="card">
+      <h2>Select your grade</h2>
+      <div class="preference-panel">
+        <div class="preference-group">
+          <span>I am a:</span>
+          <label><input type="radio" name="gender" value="girl"> Girl</label>
+          <label><input type="radio" name="gender" value="boy"> Boy</label>
+          <label><input type="radio" name="gender" value="none" checked> Prefer not to say</label>
+        </div>
+        <div class="preference-group">
+          <span>Screen color:</span>
+          <label><input type="radio" name="theme" value="none" checked> Leave color alone</label>
+          <label><input type="radio" name="theme" value="gender"> Use gender theme</label>
+        </div>
+      </div>
+      <div class="grade-buttons">
+        <button class="grade-btn" data-grade="1">1st Grade</button>
+        <button class="grade-btn" data-grade="2">2nd Grade</button>
+        <button class="grade-btn" data-grade="3">3rd Grade</button>
+        <button class="grade-btn" data-grade="4">4th Grade</button>
+        <button class="grade-btn" data-grade="5">5th Grade</button>
+      </div>
+    </section>
+
+    <section id="quiz-screen" class="card hidden">
       <div id="question-bank">
         <h2>Answer all 3 questions</h2>
         <div id="questions"></div>
@@ -27,6 +51,9 @@
       <div class="game-buttons">
         <button class="game-btn" data-game="pong">Play Pong</button>
         <button class="game-btn" data-game="snake">Play Snake</button>
+        <button class="game-btn" data-game="space-invader">Play Space Invader</button>
+        <button class="game-btn hidden" data-game="flappy-bird">Play Flappy Bird</button>
+        <button class="game-btn" data-game="pacman">Play Pacman</button>
       </div>
     </section>
 
@@ -39,6 +66,10 @@
       <div class="instructions" id="game-instructions"></div>
     </section>
   </div>
+
+  <audio id="success-sound" src="zing.wav" preload="auto"></audio>
+  <audio id="failure-sound" src="defeat2.mp3" preload="auto"></audio>
+  <audio id="hit-sound" src="ball-tap2.wav" preload="auto"></audio>
 
   <script src="script.js"></script>
 </body>
