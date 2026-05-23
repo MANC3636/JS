@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Math Quest + Pong Break</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div>
+        <p class="level-label">Grade 6–8 Math Fun</p>
+        <h1>Math Quest + Pong Break</h1>
+        <p>Answer 4 algebra questions to earn 2 minutes of pong time.</p>
+      </div>
+      <div class="hero-badge">Ready, set, solve!</div>
+    </header>
+
+    <main>
+      <section class="card quiz-card" id="quiz-section">
+        <div class="card-header">
+          <h2>Quiz Challenge</h2>
+          <p>One-step equations, expressions, word problems, and ratios.</p>
+        </div>
+
+        <form id="quiz-form">
+          <div id="question-list"></div>
+          <div class="form-actions">
+            <button type="submit" class="primary-btn">Submit Answers</button>
+            <button type="button" id="reset-btn" class="secondary-btn">New Set</button>
+          </div>
+        </form>
+
+        <div id="quiz-feedback" class="feedback"></div>
+      </section>
+
+      <section class="card game-card hidden" id="game-section">
+        <div class="card-header">
+          <h2>Pong Break</h2>
+          <p>Use your finger or mouse to move the paddle up and down.</p>
+        </div>
+        <div class="game-status">
+          <span id="game-timer">2:00</span>
+          <span id="game-score">Score: 0</span>
+        </div>
+        <canvas id="pong-canvas" width="640" height="380"></canvas>
+        <div class="game-instructions">
+          <p>Keep the ball in play until the timer ends to unlock a new question set.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
