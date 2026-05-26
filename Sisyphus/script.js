@@ -25,69 +25,129 @@ function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-function createOneStepEquation() {
-  const x = randomInt(1, 12);
-  const b = randomInt(1, 12);
-  const op = Math.random() < 0.5 ? '+' : '-';
-  if (op === '+') {
-    return {
-      prompt: `Solve: x + ${b} = ${x + b}`,
+function createOneStepEquationWordProblem() {
+  const variations = [];
+  
+  for (let i = 0; i < 5; i += 1) {
+    const x = randomInt(5, 12);
+    const b = randomInt(1, x - 1);
+    
+    const prompts = [
+      `Jordan has x marbles. He gives ${b} marbles to a friend and has ${x - b} left. What was x?`,
+      `A box contains x candy bars. After removing ${b}, there are ${x - b} left. What is x?`,
+      `Sarah had x stickers. She used ${b} in a project and has ${x - b} remaining. What is x?`,
+      `A store had x books. After selling ${b} books, ${x - b} remain on the shelf. What is x?`,
+      `In a garden, x flowers were planted. ${b} flowers wilted, leaving ${x - b} healthy ones. What is x?`,
+    ];
+    
+    variations.push({
+      prompt: prompts[i],
       answer: x,
       validate: (value) => Number(value) === x,
-    };
+    });
   }
-  return {
-    prompt: `Solve: x - ${b} = ${x - b}`,
-    answer: x,
-    validate: (value) => Number(value) === x,
-  };
+  
+  return variations[randomInt(0, 4)];
 }
 
 function createEvaluateExpression() {
-  const a = randomInt(2, 8);
-  const b = randomInt(1, 10);
-  const c = randomInt(1, 6);
-  const expression = `${a}(${b} + ${c})`;
-  const result = a * (b + c);
-  return {
-    prompt: `Evaluate: ${expression}`,
-    answer: result,
-    validate: (value) => Number(value) === result,
-  };
+  const variations = [];
+  
+  for (let i = 0; i < 5; i += 1) {
+    const pointsPerGame = randomInt(2, 8);
+    const bonus = randomInt(3, 10);
+    const numGames = randomInt(3, 8);
+    
+    const scenarios = [
+      { subject: 'Riley', activity: 'game', unit: 'points', action: 'earned a' },
+      { subject: 'Marcus', activity: 'level', unit: 'coins', action: 'collected a' },
+      { subject: 'Sofia', activity: 'race', unit: 'seconds', action: 'saved a' },
+      { subject: 'Jordan', activity: 'task', unit: 'stars', action: 'got a' },
+      { subject: 'Alex', activity: 'round', unit: 'tokens', action: 'won a' },
+    ];
+    
+    const { subject, activity, unit, action } = scenarios[i];
+    const result = pointsPerGame * numGames + bonus;
+    
+    variations.push({
+      prompt: `${subject} scores ${pointsPerGame} ${unit} per ${activity} and ${action} ${bonus}-${unit} bonus this season. After ${numGames} ${activity}s, what is the total ${unit}?`,
+      answer: result,
+      validate: (value) => Number(value) === result,
+    });
+  }
+  
+  return variations[randomInt(0, 4)];
 }
 
-function createWriteExpression() {
-  const num = randomInt(2, 8);
-  const item = ['candies', 'books', 'stickers', 'marbles'][randomInt(0, 3)];
-  const value = randomInt(2, 10);
-  return {
-    prompt: `Write an expression: ${num} ${item} cost $${value} each. How much for all ${num}?`,
-    answer: `${num}*${value}`,
-    validate: (value) => {
-      const cleaned = value.replace(/\s+/g, '');
-      return cleaned === `${num}*${value}` || cleaned === `${value}*${num}`;
-    },
-  };
+function createWriteExpressionWordProblem() {
+  const variations = [];
+  
+  for (let i = 0; i < 5; i += 1) {
+    const num = randomInt(2, 8);
+    const value = randomInt(2, 10);
+    
+    const prompts = [
+      `Write an expression: ${num} candies cost $${value} each. How much for all ${num}?`,
+      `Write an expression: ${num} books cost $${value} each. Total cost?`,
+      `Write an expression: Each of ${num} students gets $${value}. Total amount distributed?`,
+      `Write an expression: ${num} pizzas cost $${value} each. What's the total?`,
+      `Write an expression: ${num} tickets at $${value} each. Total expense?`,
+    ];
+    
+    variations.push({
+      prompt: prompts[i],
+      answer: `${num}*${value}`,
+      validate: (value) => {
+        const cleaned = value.replace(/\s+/g, '');
+        return cleaned === `${num}*${value}` || cleaned === `${value}*${num}`;
+      },
+    });
+  }
+  
+  return variations[randomInt(0, 4)];
 }
 
-function createRatioProblem() {
-  const a = randomInt(2, 5);
-  const b = randomInt(2, 7);
-  const scale = randomInt(2, 5);
-  return {
-    prompt: `If ${a}:${b} = x:${b * scale}, what is x?`,
-    answer: a * scale,
-    validate: (value) => Number(value) === a * scale,
-  };
+function createRatioProblemWordProblem() {
+  const variations = [];
+  
+  for (let i = 0; i < 5; i += 1) {
+    const a = randomInt(2, 5);
+    const b = randomInt(2, 7);
+    const scale = randomInt(2, 5);
+    
+    const prompts = [
+      `The ratio of apples to oranges is ${a}:${b}. If there are ${b * scale} oranges, how many apples are there?`,
+      `A recipe calls for ${a} cups of flour to ${b} cups of sugar. If you use ${b * scale} cups of sugar, how much flour?`,
+      `In a class, the ratio of boys to girls is ${a}:${b}. If there are ${b * scale} girls, how many boys?`,
+      `A map has a scale of ${a}:${b}. If a real distance is ${b * scale} miles, what is the map distance?`,
+      `The ratio of cats to dogs in a shelter is ${a}:${b}. With ${b * scale} dogs, how many cats are there?`,
+    ];
+    
+    variations.push({
+      prompt: prompts[i],
+      answer: a * scale,
+      validate: (value) => Number(value) === a * scale,
+    });
+  }
+  
+  return variations[randomInt(0, 4)];
+}
+
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i -= 1) {
+    const j = randomInt(0, i);
+    [array[i], array[j]] = [array[j], array[i]];
+  }
 }
 
 function generateQuestions() {
   questions = [
-    createOneStepEquation(),
+    createOneStepEquationWordProblem(),
     createEvaluateExpression(),
-    createWriteExpression(),
-    createRatioProblem(),
+    createWriteExpressionWordProblem(),
+    createRatioProblemWordProblem(),
   ];
+  shuffleArray(questions);
   renderQuestions();
 }
 

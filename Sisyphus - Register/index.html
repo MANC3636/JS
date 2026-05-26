@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Math Quest + Pong Break</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <header class="hero">
+      <div>
+        <p class="level-label">Sixth Grade Math Fun</p>
+        <h1>Sisyphus: Algebra with a slice of Pong</h1>
+        <p>Answer 4 algebra questions to earn 2 minutes of pong time.</p>
+      </div>
+      <div class="hero-actions">
+        <div class="hero-badge">Ready, set, solve!</div>
+        <button id="sign-out-btn" class="secondary-btn hidden">Sign Out</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="card register-card" id="register-section">
+        <div class="card-header">
+          <h2>Student Registration</h2>
+          <p>Register or sign in so the app can verify your student account and track your session time.</p>
+        </div>
+
+        <div class="session-banner hidden" id="session-banner">
+          <p>Signed in as <strong id="student-name"></strong> <span id="student-grade"></span></p>
+          <p id="session-duration">Session time: 0:00</p>
+        </div>
+
+        <div class="auth-tabs">
+          <button id="tab-register" class="tab active" type="button">Register</button>
+          <button id="tab-signin" class="tab" type="button">Sign In</button>
+        </div>
+
+        <form id="register-form" class="auth-panel">
+          <div class="form-row">
+            <label for="first-name">First Name</label>
+            <input id="first-name" name="firstName" autocomplete="given-name" required />
+          </div>
+          <div class="form-row">
+            <label for="last-name">Last Name</label>
+            <input id="last-name" name="lastName" autocomplete="family-name" required />
+          </div>
+          <div class="form-row">
+            <label for="grade">Grade</label>
+            <input id="grade" name="grade" autocomplete="off" required />
+          </div>
+          <div class="form-row">
+            <label for="register-email">Email</label>
+            <input id="register-email" name="email" type="email" autocomplete="email" required />
+          </div>
+          <div class="form-row remember-row">
+            <label>
+              <input id="remember-me-register" type="checkbox" /> Remember me on this device
+            </label>
+          </div>
+          <div class="form-actions auth-actions">
+            <button type="submit" class="primary-btn">Register</button>
+          </div>
+        </form>
+
+        <form id="signin-form" class="auth-panel hidden">
+          <div class="form-row">
+            <label for="signin-email">Registered Email</label>
+            <input id="signin-email" name="email" type="email" autocomplete="email" required />
+          </div>
+          <div class="form-row">
+            <label for="signin-last-name">Last Name</label>
+            <input id="signin-last-name" name="lastName" autocomplete="family-name" required />
+          </div>
+          <div class="form-row remember-row">
+            <label>
+              <input id="remember-me-signin" type="checkbox" /> Remember me on this device
+            </label>
+          </div>
+          <div class="form-actions auth-actions">
+            <button type="submit" class="primary-btn">Sign In</button>
+          </div>
+        </form>
+
+        <div id="register-feedback" class="feedback hidden"></div>
+        <div id="signin-feedback" class="feedback hidden"></div>
+        <div id="restricted-export-row" class="export-row hidden">
+          <button id="export-data-btn" class="secondary-btn" type="button">Download Student Registry</button>
+          <button id="export-usage-btn" class="secondary-btn" type="button">Download Usage History</button>
+          <button id="take-quiz-btn" class="primary-btn hidden" type="button">Take the Quiz</button>
+          <p class="export-note">Export student registration or usage data as Excel-readable CSV files.</p>
+        </div>
+        <div id="restricted-scheduler-design" class="scheduler-design hidden">
+          <details>
+            <summary>Weekly report scheduler design</summary>
+            <p>This design outlines how weekly student registry reports can be automated outside the browser.</p>
+            <ul>
+              <li>Backend endpoint reads the saved student registry.</li>
+              <li>Scheduled job exports the registry to CSV every Monday at 9:00 AM.</li>
+              <li>Email service sends the report to <strong>ttyson@blackstudentfund.org</strong>.</li>
+              <li>Optional storage: keep a copy in secure cloud storage for audit history.</li>
+              <li>This registry also keeps a weekly student usage log for monitoring action counts and active sessions.</li>
+            </ul>
+          </details>
+        </div>
+      </section>
+
+      <section class="card quiz-card hidden" id="quiz-section">
+        <div class="card-header">
+          <h2>Quiz Challenge</h2>
+          <p>One-step equations, expressions, word problems, and ratios.</p>
+        </div>
+
+        <form id="quiz-form">
+          <div id="question-list"></div>
+          <div class="form-actions">
+            <button type="submit" class="primary-btn">Submit Answers</button>
+            <button type="button" id="reset-btn" class="secondary-btn">New Set</button>
+          </div>
+        </form>
+
+        <div id="quiz-feedback" class="feedback"></div>
+      </section>
+
+      <section class="card game-card hidden" id="game-section">
+        <div class="card-header">
+          <h2>Pong Break</h2>
+          <p>Use your finger or mouse to move the paddle up and down.</p>
+        </div>
+        <div class="game-status">
+          <span id="game-timer">2:00</span>
+          <span id="game-score">Score: 0</span>
+        </div>
+        <canvas id="pong-canvas" width="640" height="380"></canvas>
+        <div class="game-instructions">
+          <p>Keep the ball in play until the timer ends to unlock a new question set.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
