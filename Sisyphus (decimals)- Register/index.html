@@ -11,8 +11,8 @@
     <header class="hero">
       <div>
         <p class="level-label">Sixth Grade Math Fun</p>
-        <h1>Sisyphus: Algebra with a slice of Pong</h1>
-        <p>Answer 4 algebra questions to earn 2 minutes of pong time.</p>
+        <h1>Sisyphus: Math with a slice of Pong</h1>
+        <p>Answer 4 math questions to earn 2 minutes of pong time.</p>
       </div>
       <div class="hero-actions">
         <div class="hero-badge">Ready, set, solve!</div>
@@ -30,6 +30,22 @@
         <div class="session-banner hidden" id="session-banner">
           <p>Signed in as <strong id="student-name"></strong> <span id="student-grade"></span></p>
           <p id="session-duration">Session time: 0:00</p>
+        </div>
+
+        <div id="topic-picker" class="topic-picker hidden">
+          <p class="topic-picker-label">What would you like to practice today?</p>
+          <div class="topic-btns">
+            <button id="topic-algebra-btn" class="topic-btn" type="button">
+              <span class="topic-icon">📐</span>
+              <span class="topic-name">Algebra</span>
+              <span class="topic-desc">Equations, expressions &amp; ratios</span>
+            </button>
+            <button id="topic-decimals-btn" class="topic-btn" type="button">
+              <span class="topic-icon">🔢</span>
+              <span class="topic-name">Decimals</span>
+              <span class="topic-desc">Add, subtract, multiply &amp; divide</span>
+            </button>
+          </div>
         </div>
 
         <div class="auth-tabs">
@@ -109,7 +125,7 @@
       <section class="card quiz-card hidden" id="quiz-section">
         <div class="card-header">
           <h2>Quiz Challenge</h2>
-          <p>One-step equations, expressions, word problems, and ratios.</p>
+          <p id="quiz-description">Choose a topic above to get started.</p>
         </div>
 
         <form id="quiz-form">
@@ -121,12 +137,26 @@
         </form>
 
         <div id="quiz-feedback" class="feedback"></div>
+
+        <div id="game-mode-picker" class="game-mode-picker hidden">
+          <p class="mode-picker-label">Choose your pong experience:</p>
+          <div class="mode-btns">
+            <button id="normal-pong-btn" class="mode-btn" type="button">
+              <span class="mode-name">Normal Pong</span>
+              <span class="mode-desc">Classic — the ball is always visible</span>
+            </button>
+            <button id="ghost-pong-btn" class="mode-btn" type="button">
+              <span class="mode-name">👻 Ghost Pong</span>
+              <span class="mode-desc">The ball vanishes past midcourt — good luck!</span>
+            </button>
+          </div>
+        </div>
       </section>
 
       <section class="card game-card hidden" id="game-section">
         <div class="card-header">
-          <h2>Pong Break</h2>
-          <p>Use your finger or mouse to move the paddle up and down.</p>
+          <h2 id="game-title">Pong Break</h2>
+          <p id="game-desc">Use your finger or mouse to move the paddle up and down.</p>
         </div>
         <div class="game-status">
           <span id="game-timer">2:00</span>

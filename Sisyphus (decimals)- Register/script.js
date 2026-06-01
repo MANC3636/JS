@@ -24,12 +24,22 @@ const timerDisplay = document.getElementById('game-timer');
 const scoreDisplay = document.getElementById('game-score');
 const restrictedExportRow = document.getElementById('restricted-export-row');
 const restrictedSchedulerDesign = document.getElementById('restricted-scheduler-design');
+const gameModePicker = document.getElementById('game-mode-picker');
+const normalPongBtn = document.getElementById('normal-pong-btn');
+const ghostPongBtn = document.getElementById('ghost-pong-btn');
+const gameTitle = document.getElementById('game-title');
+const gameDesc = document.getElementById('game-desc');
+const topicPicker = document.getElementById('topic-picker');
+const topicAlgebraBtn = document.getElementById('topic-algebra-btn');
+const topicDecimalsBtn = document.getElementById('topic-decimals-btn');
+const quizDescription = document.getElementById('quiz-description');
 const canvas = document.getElementById('pong-canvas');
 const ctx = canvas.getContext('2d');
 
 let activeStudent = null;
 let sessionTimer = null;
 let sessionStartTimestamp = null;
+let currentTopic = null;
 
 let questions = [];
 let gameTimer = null;
@@ -40,6 +50,9 @@ let ball = null;
 let playerPaddle = null;
 let aiPaddle = null;
 let pairs = [];
+let ballVisible = true;
+let ballInZone = false;
+let gameMode = 'normal';
 let currentScore = 0;
 let gameActive = false;
 
@@ -49,11 +62,18 @@ function randomInt(min, max) {
 
 function createOneStepEquationWordProblem() {
   const variations = [];
-  
+  const khanLinks = [
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-equations-and-inequalities/cc-6th-one-step-add-sub-equations/e/one_step_equations',
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-equations-and-inequalities/cc-6th-one-step-add-sub-equations/v/adding-and-subtracting-the-same-thing-from-both-sides',
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-equations-and-inequalities/cc-6th-one-step-add-sub-equations/a/solving-one-step-addition-and-subtraction-equations',
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-equations-and-inequalities/cc-6th-one-step-add-sub-equations/e/one_step_equations',
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-equations-and-inequalities/cc-6th-one-step-add-sub-equations/v/adding-and-subtracting-the-same-thing-from-both-sides',
+  ];
+
   for (let i = 0; i < 5; i += 1) {
     const x = randomInt(5, 12);
     const b = randomInt(1, x - 1);
-    
+
     const prompts = [
       `Jordan has x marbles. He gives ${b} marbles to a friend and has ${x - b} left. What was x?`,
       `A box contains x candy bars. After removing ${b}, there are ${x - b} left. What is x?`,
@@ -61,25 +81,33 @@ function createOneStepEquationWordProblem() {
       `A store had x books. After selling ${b} books, ${x - b} remain on the shelf. What is x?`,
       `In a garden, x flowers were planted. ${b} flowers wilted, leaving ${x - b} healthy ones. What is x?`,
     ];
-    
+
     variations.push({
       prompt: prompts[i],
       answer: x,
       validate: (value) => Number(value) === x,
+      khanLink: khanLinks[i],
     });
   }
-  
-  return variations[randomInt(0, 4)];
+
+  return { ...variations[randomInt(0, 4)], topicLabel: 'a one-step equation problem' };
 }
 
 function createEvaluateExpression() {
   const variations = [];
-  
+  const khanLinks = [
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/x0267d782:cc-6th-exponents-and-order-of-operations/cc-6th-order-of-operations/v/more-complicated-order-of-operations-example',
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/x0267d782:cc-6th-exponents-and-order-of-operations/x0267d782:more-on-order-of-operations/a/order-of-operations-review',
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/x0267d782:cc-6th-exponents-and-order-of-operations/x0267d782:more-on-order-of-operations/e/order_of_operations_2',
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/x0267d782:cc-6th-exponents-and-order-of-operations/cc-6th-order-of-operations/v/more-complicated-order-of-operations-example',
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/x0267d782:cc-6th-exponents-and-order-of-operations/x0267d782:more-on-order-of-operations/a/order-of-operations-review',
+  ];
+
   for (let i = 0; i < 5; i += 1) {
     const pointsPerGame = randomInt(2, 8);
     const bonus = randomInt(3, 10);
     const numGames = randomInt(3, 8);
-    
+
     const scenarios = [
       { subject: 'Riley', activity: 'game', unit: 'points', action: 'earned a' },
       { subject: 'Marcus', activity: 'level', unit: 'coins', action: 'collected a' },
@@ -87,27 +115,35 @@ function createEvaluateExpression() {
       { subject: 'Jordan', activity: 'task', unit: 'stars', action: 'got a' },
       { subject: 'Alex', activity: 'round', unit: 'tokens', action: 'won a' },
     ];
-    
+
     const { subject, activity, unit, action } = scenarios[i];
     const result = pointsPerGame * numGames + bonus;
-    
+
     variations.push({
       prompt: `${subject} scores ${pointsPerGame} ${unit} per ${activity} and ${action} ${bonus}-${unit} bonus this season. After ${numGames} ${activity}s, what is the total ${unit}?`,
       answer: result,
       validate: (value) => Number(value) === result,
+      khanLink: khanLinks[i],
     });
   }
-  
-  return variations[randomInt(0, 4)];
+
+  return { ...variations[randomInt(0, 4)], topicLabel: 'an evaluating expressions problem' };
 }
 
 function createWriteExpressionWordProblem() {
   const variations = [];
-  
+  const khanLinks = [
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-expressions-and-variables/cc-6th-alg-expression-word-problems/v/writing-basic-expressions-from-word-problems-examples',
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-expressions-and-variables/cc-6th-alg-expression-word-problems/e/writing-expressions-with-variables-word-problems',
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-expressions-and-variables/cc-6th-alg-expression-word-problems/a/writing-algebraic-expressions-in-word-problems',
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-expressions-and-variables/cc-6th-alg-expression-word-problems/v/writing-basic-expressions-from-word-problems-examples',
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-expressions-and-variables/cc-6th-alg-expression-word-problems/e/writing-expressions-with-variables-word-problems',
+  ];
+
   for (let i = 0; i < 5; i += 1) {
     const num = randomInt(2, 8);
     const value = randomInt(2, 10);
-    
+
     const prompts = [
       `Write an expression: ${num} candies cost $${value} each. How much for all ${num}?`,
       `Write an expression: ${num} books cost $${value} each. Total cost?`,
@@ -115,28 +151,36 @@ function createWriteExpressionWordProblem() {
       `Write an expression: ${num} pizzas cost $${value} each. What's the total?`,
       `Write an expression: ${num} tickets at $${value} each. Total expense?`,
     ];
-    
+
     variations.push({
       prompt: prompts[i],
       answer: `${num}*${value}`,
-      validate: (value) => {
-        const cleaned = value.replace(/\s+/g, '');
+      validate: (input) => {
+        const cleaned = input.replace(/\s+/g, '');
         return cleaned === `${num}*${value}` || cleaned === `${value}*${num}`;
       },
+      khanLink: khanLinks[i],
     });
   }
-  
-  return variations[randomInt(0, 4)];
+
+  return { ...variations[randomInt(0, 4)], topicLabel: 'a writing expressions problem' };
 }
 
 function createRatioProblemWordProblem() {
   const variations = [];
-  
+  const khanLinks = [
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-ratios-prop-topic/cc-6th-equivalent-ratios/e/ratio_word_problems',
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-ratios-prop-topic/cc-6th-ratio-word-problems/v/ratio-word-problem-exercise-example-1',
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-ratios-prop-topic/cc-6th-ratio-word-problems/e/part-part-whole-ratios',
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-ratios-prop-topic/cc-6th-ratio-word-problems/v/ratio-word-problem-exercise-example-1',
+    'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-ratios-prop-topic/cc-6th-equivalent-ratios/e/ratio_word_problems',
+  ];
+
   for (let i = 0; i < 5; i += 1) {
     const a = randomInt(2, 5);
     const b = randomInt(2, 7);
     const scale = randomInt(2, 5);
-    
+
     const prompts = [
       `The ratio of apples to oranges is ${a}:${b}. If there are ${b * scale} oranges, how many apples are there?`,
       `A recipe calls for ${a} cups of flour to ${b} cups of sugar. If you use ${b * scale} cups of sugar, how much flour?`,
@@ -144,15 +188,152 @@ function createRatioProblemWordProblem() {
       `A map has a scale of ${a}:${b}. If a real distance is ${b * scale} miles, what is the map distance?`,
       `The ratio of cats to dogs in a shelter is ${a}:${b}. With ${b * scale} dogs, how many cats are there?`,
     ];
-    
+
     variations.push({
       prompt: prompts[i],
       answer: a * scale,
       validate: (value) => Number(value) === a * scale,
+      khanLink: khanLinks[i],
     });
   }
-  
-  return variations[randomInt(0, 4)];
+
+  return { ...variations[randomInt(0, 4)], topicLabel: 'a ratio word problem' };
+}
+
+function createDecimalAdditionProblem() {
+  const variations = [];
+  const khanLinks = [
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/imp-addition-and-subtraction-3/imp-adding-decimals/v/introduction-to-adding-decimals-tenths',
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/imp-addition-and-subtraction-3/imp-adding-decimals/v/adding-decimals-with-ones-and-tenths-parts',
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/imp-addition-and-subtraction-3/imp-adding-decimals/e/adding-decimals-without-the-standard-algorithm-3',
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/imp-addition-and-subtraction-3/imp-adding-decimals/v/introduction-to-adding-decimals-tenths',
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/imp-addition-and-subtraction-3/imp-adding-decimals/e/adding-decimals-without-the-standard-algorithm-3',
+  ];
+
+  for (let i = 0; i < 5; i += 1) {
+    const a = randomInt(11, 89) / 10;
+    const b = randomInt(11, 89) / 10;
+    const answer = parseFloat((a + b).toFixed(1));
+
+    const prompts = [
+      `Maya jogged ${a} miles in the morning and ${b} miles after school. How many miles did she jog in all?`,
+      `A bag weighs ${a} kg and another weighs ${b} kg. What is their combined weight?`,
+      `One piece of wood is ${a} meters long and another is ${b} meters. What is the total length?`,
+      `Carlos spent $${a} on lunch and $${b} on a snack. How much did he spend altogether?`,
+      `A fish tank holds ${a} liters and a pitcher holds ${b} liters. How many liters of water is that in total?`,
+    ];
+
+    variations.push({
+      prompt: prompts[i],
+      answer,
+      validate: (value) => Math.abs(Number(value) - answer) < 0.001,
+      khanLink: khanLinks[i],
+    });
+  }
+
+  return { ...variations[randomInt(0, 4)], topicLabel: 'a decimal addition problem' };
+}
+
+function createDecimalSubtractionProblem() {
+  const variations = [];
+  const khanLinks = [
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/subtract-decimals/imp-subtracting-decimals/v/strategies-for-subtracting-basic-decimals',
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/subtract-decimals/imp-subtracting-decimals/v/strategies-for-subtracting-more-complex-decimals-with-tenths',
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/subtract-decimals/imp-subtracting-decimals/e/subtracting-decimals-without-the-standard-algorithm-2',
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/subtract-decimals/imp-subtracting-decimals/v/strategies-for-subtracting-basic-decimals',
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/subtract-decimals/imp-subtracting-decimals/e/subtracting-decimals-without-the-standard-algorithm-2',
+  ];
+
+  for (let i = 0; i < 5; i += 1) {
+    const b = randomInt(11, 59) / 10;
+    const a = parseFloat((b + randomInt(11, 39) / 10).toFixed(1));
+    const answer = parseFloat((a - b).toFixed(1));
+
+    const prompts = [
+      `Mia had $${a} and spent $${b}. How much money does she have left?`,
+      `A rope was ${a} meters long. After cutting off ${b} meters, how much rope remains?`,
+      `The temperature dropped from ${a}°F to ${b}°F. By how many degrees did it fall?`,
+      `A bottle had ${a} liters of juice. After pouring out ${b} liters, how much is left?`,
+      `A bag of rice weighed ${a} kg. After using ${b} kg in a recipe, what is the remaining weight?`,
+    ];
+
+    variations.push({
+      prompt: prompts[i],
+      answer,
+      validate: (value) => Math.abs(Number(value) - answer) < 0.001,
+      khanLink: khanLinks[i],
+    });
+  }
+
+  return { ...variations[randomInt(0, 4)], topicLabel: 'a decimal subtraction problem' };
+}
+
+function createDecimalMultiplicationProblem() {
+  const variations = [];
+  const khanLinks = [
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/imp-multiplication-and-division-3/multiplying-decimals-and-whole-numbers/v/strategies-for-multiplying-decimals-and-whole-numbers',
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/imp-multiplication-and-division-3/multiplying-decimals-and-whole-numbers/e/multiply-whole-numbers-and-decimals',
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/imp-multiplication-and-division-3/multiplying-decimals-and-whole-numbers/v/multiplying-decimals-and-whole-numbers-with-visuals',
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/imp-multiplication-and-division-3/multiplying-decimals-and-whole-numbers/e/multiply-whole-numbers-and-decimals',
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/imp-multiplication-and-division-3/multiplying-decimals-and-whole-numbers/v/strategies-for-multiplying-decimals-and-whole-numbers',
+  ];
+
+  for (let i = 0; i < 5; i += 1) {
+    const factor = randomInt(12, 45) / 10;
+    const multiplier = randomInt(2, 8);
+    const answer = parseFloat((factor * multiplier).toFixed(1));
+
+    const prompts = [
+      `Each book costs $${factor}. What is the total cost of ${multiplier} books?`,
+      `A car travels ${factor} miles per hour. How far does it travel in ${multiplier} hours?`,
+      `Jordan earns $${factor} per hour. How much does he earn working ${multiplier} hours?`,
+      `Each bag of apples weighs ${factor} pounds. What is the total weight of ${multiplier} bags?`,
+      `A single tile is ${factor} meters wide. How wide are ${multiplier} tiles placed side by side?`,
+    ];
+
+    variations.push({
+      prompt: prompts[i],
+      answer,
+      validate: (value) => Math.abs(Number(value) - answer) < 0.01,
+      khanLink: khanLinks[i],
+    });
+  }
+
+  return { ...variations[randomInt(0, 4)], topicLabel: 'a decimal multiplication problem' };
+}
+
+function createDecimalDivisionProblem() {
+  const variations = [];
+  const khanLinks = [
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/divide-decimals/divide-whole-numbers-to-get-a-decimal-quotient/v/divide-whole-numbers-with-decimal-quotients',
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/divide-decimals/imp-dividing-decimals/v/visually-dividing-decimal-by-whole-number',
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/divide-decimals/imp-dividing-decimals/e/dividing-decimals-without-the-standard-algorithm-3',
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/divide-decimals/divide-whole-numbers-to-get-a-decimal-quotient/v/divide-whole-numbers-with-decimal-quotients',
+    'https://www.khanacademy.org/math/cc-fifth-grade-math/divide-decimals/imp-dividing-decimals/v/visually-dividing-decimal-by-whole-number',
+  ];
+
+  for (let i = 0; i < 5; i += 1) {
+    const answer = randomInt(11, 39) / 10;
+    const divisor = randomInt(2, 6);
+    const dividend = parseFloat((answer * divisor).toFixed(1));
+
+    const prompts = [
+      `${divisor} friends share $${dividend} equally. How much does each person get?`,
+      `A ribbon ${dividend} meters long is cut into ${divisor} equal pieces. How long is each piece?`,
+      `A car used ${dividend} liters of gas over ${divisor} days. What was the average daily usage in liters?`,
+      `${dividend} pounds of trail mix is divided equally into ${divisor} bags. How many pounds per bag?`,
+      `A pipe ${dividend} meters long is cut into ${divisor} equal sections. How long is each section?`,
+    ];
+
+    variations.push({
+      prompt: prompts[i],
+      answer,
+      validate: (value) => Math.abs(Number(value) - answer) < 0.01,
+      khanLink: khanLinks[i],
+    });
+  }
+
+  return { ...variations[randomInt(0, 4)], topicLabel: 'a decimal division problem' };
 }
 
 function shuffleArray(array) {
@@ -355,11 +536,6 @@ function updateRestrictedAccess(student) {
   const allowed = isAuthorizedStudent(student);
   restrictedExportRow.classList.toggle('hidden', !allowed);
   restrictedSchedulerDesign.classList.toggle('hidden', !allowed);
-  takeQuizBtn.classList.toggle('hidden', !allowed);
-  if (!allowed) {
-    quizSection.classList.add('hidden');
-    gameSection.classList.add('hidden');
-  }
 }
 
 function setActiveStudent(student, { restoreTimestamp = false, rememberMe = false } = {}) {
@@ -388,6 +564,7 @@ function setActiveStudent(student, { restoreTimestamp = false, rememberMe = fals
     clearRememberedLogin();
   }
 
+  topicPicker.classList.remove('hidden');
   logStudentUsage(student, 'sign-in');
   updateRestrictedAccess(student);
 
@@ -400,10 +577,16 @@ function setActiveStudent(student, { restoreTimestamp = false, rememberMe = fals
 
 function clearActiveStudent() {
   activeStudent = null;
+  currentTopic = null;
   sessionStartTimestamp = null;
   sessionBanner.classList.add('hidden');
   signOutBtn.classList.add('hidden');
+  topicPicker.classList.add('hidden');
+  gameModePicker.classList.add('hidden');
+  topicAlgebraBtn.classList.remove('selected');
+  topicDecimalsBtn.classList.remove('selected');
   quizSection.classList.add('hidden');
+  gameSection.classList.add('hidden');
   registerSection.classList.remove('hidden');
   authTabs.classList.remove('hidden');
   registerForm.classList.remove('hidden');
@@ -443,14 +626,36 @@ function tryAutoSignIn() {
 }
 
 function generateQuestions() {
-  questions = [
-    createOneStepEquationWordProblem(),
-    createEvaluateExpression(),
-    createWriteExpressionWordProblem(),
-    createRatioProblemWordProblem(),
-  ];
+  if (currentTopic === 'decimals') {
+    questions = [
+      createDecimalAdditionProblem(),
+      createDecimalSubtractionProblem(),
+      createDecimalMultiplicationProblem(),
+      createDecimalDivisionProblem(),
+    ];
+  } else {
+    questions = [
+      createOneStepEquationWordProblem(),
+      createEvaluateExpression(),
+      createWriteExpressionWordProblem(),
+      createRatioProblemWordProblem(),
+    ];
+  }
   shuffleArray(questions);
   renderQuestions();
+}
+
+function startTopic(topic) {
+  currentTopic = topic;
+  topicAlgebraBtn.classList.toggle('selected', topic === 'algebra');
+  topicDecimalsBtn.classList.toggle('selected', topic === 'decimals');
+  quizDescription.textContent = topic === 'decimals'
+    ? 'Adding, subtracting, multiplying, and dividing decimals.'
+    : 'One-step equations, expressions, word problems, and ratios.';
+  logStudentUsage(activeStudent, `quiz-start-${topic}`);
+  generateQuestions();
+  quizSection.classList.remove('hidden');
+  quizSection.scrollIntoView({ behavior: 'smooth' });
 }
 
 function renderQuestions() {
@@ -478,10 +683,16 @@ function showFeedback(message, isSuccess = false) {
     : 'rgba(255, 111, 97, 0.26)';
 }
 
+function clearTimerWarning() {
+  timerDisplay.classList.remove('timer-warning', 'timer-danger');
+}
+
 function endGame() {
   gameActive = false;
   cancelAnimationFrame(animationFrameId);
   clearInterval(gameTimer);
+  clearTimerWarning();
+  gameModePicker.classList.add('hidden');
   showFeedback('Time is up! A new quiz is ready. Try the next round.', false);
   quizSection.scrollIntoView({ behavior: 'smooth' });
   gameSection.classList.add('hidden');
@@ -498,18 +709,31 @@ function formatTimer(seconds) {
   return `${mins}:${secs}`;
 }
 
-function startGame() {
+function startGame(mode) {
+  gameMode = mode;
+  gameModePicker.classList.add('hidden');
+  gameTitle.textContent = mode === 'ghost' ? 'Ghost Pong' : 'Pong Break';
+  gameDesc.textContent = mode === 'ghost'
+    ? 'The ball vanishes past midcourt — track it if you can!'
+    : 'Use your finger or mouse to move the paddle up and down.';
   gameSection.classList.remove('hidden');
   quizSection.classList.add('hidden');
   gameActive = true;
   currentScore = 0;
   scoreDisplay.textContent = `Score: ${currentScore}`;
   remainingSeconds = gameDuration;
+  clearTimerWarning();
   timerDisplay.textContent = formatTimer(remainingSeconds);
   initGameObjects();
   gameTimer = setInterval(() => {
     remainingSeconds -= 1;
     timerDisplay.textContent = formatTimer(remainingSeconds);
+    if (remainingSeconds <= 15) {
+      timerDisplay.classList.remove('timer-warning');
+      timerDisplay.classList.add('timer-danger');
+    } else if (remainingSeconds <= 30) {
+      timerDisplay.classList.add('timer-warning');
+    }
     if (remainingSeconds <= 0) {
       endGame();
     }
@@ -518,6 +742,8 @@ function startGame() {
 }
 
 function initGameObjects() {
+  ballVisible = true;
+  ballInZone = false;
   const width = canvas.width;
   const height = canvas.height;
   playerPaddle = {
@@ -574,13 +800,29 @@ function drawGame() {
   ctx.stroke();
   ctx.setLineDash([]);
 
+  if (remainingSeconds <= 15) {
+    if (Math.floor(Date.now() / 250) % 2 === 0) {
+      ctx.strokeStyle = 'rgba(255, 68, 68, 0.85)';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+    }
+  } else if (remainingSeconds <= 30) {
+    if (Math.floor(Date.now() / 500) % 2 === 0) {
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.75)';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+    }
+  }
+
   drawRoundedRect(playerPaddle.x, playerPaddle.y, playerPaddle.width, playerPaddle.height, 12, '#3dd3c1');
   drawRoundedRect(aiPaddle.x, aiPaddle.y, aiPaddle.width, aiPaddle.height, 12, '#ff6f61');
 
-  ctx.beginPath();
-  ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-  ctx.fillStyle = '#ffffff';
-  ctx.fill();
+  if (ballVisible) {
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+  }
 
   ball.x += ball.speedX;
   ball.y += ball.speedY;
@@ -595,6 +837,8 @@ function drawGame() {
     ball.y <= playerPaddle.y + playerPaddle.height
   ) {
     ball.speedX = Math.abs(ball.speedX);
+    ballInZone = false;
+    ballVisible = true;
     currentScore += 1;
     scoreDisplay.textContent = `Score: ${currentScore}`;
   }
@@ -612,6 +856,18 @@ function drawGame() {
     ball.y = canvas.height / 2;
     ball.speedX = ball.speedX > 0 ? 5 : -5;
     ball.speedY = 3;
+    ballVisible = true;
+    ballInZone = false;
+  }
+
+  if (gameMode === 'ghost') {
+    if (ball.x < 300 && !ballInZone) {
+      ballInZone = true;
+      ballVisible = Math.random() > 0.5;
+    } else if (ball.x >= 300 && ballInZone) {
+      ballInZone = false;
+      ballVisible = true;
+    }
   }
 
   const paddleCenter = aiPaddle.y + aiPaddle.height / 2;
@@ -658,13 +914,19 @@ quizForm.addEventListener('submit', (event) => {
       hintElement.textContent = '';
     } else {
       hintElement.classList.remove('hidden');
-      hintElement.textContent = `Correct answer: ${questions[index].answer}`;
+      const { answer, khanLink, topicLabel } = questions[index];
+      const topicSentence = topicLabel ? `This was ${topicLabel}. ` : '';
+      const khanSentence = khanLink
+        ? ` You can get a refresher on it at <a class="khan-link" href="${khanLink}" target="_blank" rel="noopener noreferrer">Khan Academy ↗</a>.`
+        : '';
+      hintElement.innerHTML = `${topicSentence}Correct answer: <strong>${String(answer)}</strong>.${khanSentence}`;
     }
   });
   const percent = Math.round((correctCount / questions.length) * 100);
   if (percent >= 75) {
-    showFeedback(`Great job! You got ${correctCount}/4 correct. Pong time starts now!`, true);
-    startGame();
+    showFeedback(`Great job! You got ${correctCount}/4 correct. Choose your pong mode below!`, true);
+    gameModePicker.classList.remove('hidden');
+    gameModePicker.scrollIntoView({ behavior: 'smooth' });
   } else {
     showFeedback(`You got ${correctCount}/4 correct (${percent}%). Try again to earn your pong break.`, false);
   }
@@ -727,6 +989,11 @@ signInForm.addEventListener('submit', (event) => {
   setActiveStudent(student, { restoreTimestamp: true, rememberMe: shouldRememberUser() });
 });
 
+topicAlgebraBtn.addEventListener('click', () => startTopic('algebra'));
+topicDecimalsBtn.addEventListener('click', () => startTopic('decimals'));
+normalPongBtn.addEventListener('click', () => startGame('normal'));
+ghostPongBtn.addEventListener('click', () => startGame('ghost'));
+
 registerTab.addEventListener('click', () => toggleAuthTab('register'));
 signInTab.addEventListener('click', () => toggleAuthTab('signin'));
 exportDataBtn.addEventListener('click', exportStudentsToCsv);
@@ -749,10 +1016,9 @@ resetBtn.addEventListener('click', () => {
 
 window.addEventListener('load', () => {
   tryAutoSignIn();
-  generateQuestions();
   if (!activeStudent) {
-    showFeedback('Register or sign in first, then answer 4 questions to earn your pong break.', false);
+    showFeedback('Register or sign in to begin.', false);
   } else {
-    showFeedback('You are signed in. Answer 4 questions correctly to earn your pong break!', false);
+    showFeedback('Pick a topic above to start your quiz!', false);
   }
 });
