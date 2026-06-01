@@ -30,6 +30,9 @@
         <div class="session-banner hidden" id="session-banner">
           <p>Signed in as <strong id="student-name"></strong> <span id="student-grade"></span></p>
           <p id="session-duration">Session time: 0:00</p>
+          <div class="session-controls">
+            <button id="theme-toggle" class="secondary-btn" type="button" aria-pressed="false">Purple Theme</button>
+          </div>
         </div>
 
         <div id="topic-picker" class="topic-picker hidden">
@@ -44,6 +47,11 @@
               <span class="topic-icon">🔢</span>
               <span class="topic-name">Decimals</span>
               <span class="topic-desc">Add, subtract, multiply &amp; divide</span>
+            </button>
+            <button id="topic-fractions-btn" class="topic-btn" type="button">
+              <span class="topic-icon">🥧</span>
+              <span class="topic-name">Fractions</span>
+              <span class="topic-desc">Multiply &amp; divide proper fractions</span>
             </button>
           </div>
         </div>
@@ -170,6 +178,6 @@
     </main>
   </div>
 
-  <script src="script.js"></script>
+  <script type="module" src="main.js"></script>
 </body>
 </html>

@@ -53,6 +53,59 @@ let pairs = [];
 let ballVisible = true;
 let ballInZone = false;
 let gameMode = 'normal';
+
+// ── Sound engine (Web Audio API, no external files) ──────────────────────────
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return audioCtx;
+}
+
+function beep(freq, duration, type = 'square', vol = 0.15, startOffset = 0) {
+  try {
+    const ctx = getAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ctx.currentTime + startOffset);
+    gain.gain.setValueAtTime(vol, ctx.currentTime + startOffset);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + startOffset + duration);
+    osc.start(ctx.currentTime + startOffset);
+    osc.stop(ctx.currentTime + startOffset + duration);
+  } catch (_) { /* audio not available */ }
+}
+
+// Pong sounds
+function sndWallHit()    { beep(250, 0.05, 'square', 0.12); }
+function sndPlayerHit()  { beep(480, 0.07, 'square', 0.18); }
+function sndAiHit()      { beep(320, 0.07, 'square', 0.12); }
+function sndGameOver()   {
+  beep(392, 0.25, 'sine', 0.18, 0.0);
+  beep(330, 0.25, 'sine', 0.18, 0.25);
+  beep(262, 0.45, 'sine', 0.18, 0.50);
+}
+
+// Quiz sounds
+function sndCorrect(delayS = 0) {
+  beep(523, 0.12, 'sine', 0.15, delayS);
+  beep(659, 0.16, 'sine', 0.15, delayS + 0.12);
+}
+function sndWrong(delayS = 0) {
+  beep(180, 0.22, 'sawtooth', 0.10, delayS);
+}
+function sndQuizPassed() {
+  [523, 659, 784, 1047].forEach((f, i) => beep(f, 0.18, 'sine', 0.20, i * 0.14));
+}
+function sndQuizFailed() {
+  beep(349, 0.20, 'sawtooth', 0.10, 0.0);
+  beep(294, 0.30, 'sawtooth', 0.10, 0.22);
+}
+// ─────────────────────────────────────────────────────────────────────────────
 let currentScore = 0;
 let gameActive = false;
 
@@ -693,6 +746,7 @@ function endGame() {
   clearInterval(gameTimer);
   clearTimerWarning();
   gameModePicker.classList.add('hidden');
+  sndGameOver();
   showFeedback('Time is up! A new quiz is ready. Try the next round.', false);
   quizSection.scrollIntoView({ behavior: 'smooth' });
   gameSection.classList.add('hidden');
@@ -829,6 +883,7 @@ function drawGame() {
 
   if (ball.y - ball.radius <= 0 || ball.y + ball.radius >= canvas.height) {
     ball.speedY = -ball.speedY;
+    sndWallHit();
   }
 
   if (
@@ -839,6 +894,7 @@ function drawGame() {
     ball.speedX = Math.abs(ball.speedX);
     ballInZone = false;
     ballVisible = true;
+    sndPlayerHit();
     currentScore += 1;
     scoreDisplay.textContent = `Score: ${currentScore}`;
   }
@@ -849,6 +905,7 @@ function drawGame() {
     ball.y <= aiPaddle.y + aiPaddle.height
   ) {
     ball.speedX = -Math.abs(ball.speedX);
+    sndAiHit();
   }
 
   if (ball.x - ball.radius <= 0 || ball.x + ball.radius >= canvas.width) {
@@ -908,11 +965,14 @@ quizForm.addEventListener('submit', (event) => {
   answers.forEach((value, index) => {
     const hintElement = document.getElementById(`hint-${index}`);
     const isCorrect = questions[index].validate(value);
+    const soundDelay = index * 0.18;
     if (isCorrect) {
       correctCount += 1;
+      sndCorrect(soundDelay);
       hintElement.classList.add('hidden');
       hintElement.textContent = '';
     } else {
+      sndWrong(soundDelay);
       hintElement.classList.remove('hidden');
       const { answer, khanLink, topicLabel } = questions[index];
       const topicSentence = topicLabel ? `This was ${topicLabel}. ` : '';
@@ -923,11 +983,14 @@ quizForm.addEventListener('submit', (event) => {
     }
   });
   const percent = Math.round((correctCount / questions.length) * 100);
+  const summaryDelay = questions.length * 0.18 + 0.25;
   if (percent >= 75) {
+    setTimeout(sndQuizPassed, summaryDelay * 1000);
     showFeedback(`Great job! You got ${correctCount}/4 correct. Choose your pong mode below!`, true);
     gameModePicker.classList.remove('hidden');
     gameModePicker.scrollIntoView({ behavior: 'smooth' });
   } else {
+    setTimeout(sndQuizFailed, summaryDelay * 1000);
     showFeedback(`You got ${correctCount}/4 correct (${percent}%). Try again to earn your pong break.`, false);
   }
 });
@@ -1022,3 +1085,38 @@ window.addEventListener('load', () => {
     showFeedback('Pick a topic above to start your quiz!', false);
   }
 });
+
+// Theme toggle: persist choice in localStorage and apply on load
+(function () {
+  const THEME_KEY = 'sisyphusTheme';
+  const FEM_CLASS = 'theme-feminine';
+  const toggle = document.getElementById('theme-toggle');
+
+  function applyTheme(name) {
+    if (name === 'feminine') {
+      document.documentElement.classList.add(FEM_CLASS);
+      if (toggle) {
+        toggle.textContent = 'Default Theme';
+        toggle.setAttribute('aria-pressed', 'true');
+      }
+    } else {
+      document.documentElement.classList.remove(FEM_CLASS);
+      if (toggle) {
+        toggle.textContent = 'Purple Theme';
+        toggle.setAttribute('aria-pressed', 'false');
+      }
+    }
+  }
+
+  if (toggle) {
+    toggle.addEventListener('click', () => {
+      const active = document.documentElement.classList.contains(FEM_CLASS);
+      const next = active ? 'default' : 'feminine';
+      localStorage.setItem(THEME_KEY, next);
+      applyTheme(next);
+    });
+  }
+
+  const saved = localStorage.getItem(THEME_KEY);
+  applyTheme(saved === 'feminine' ? 'feminine' : 'default');
+})();

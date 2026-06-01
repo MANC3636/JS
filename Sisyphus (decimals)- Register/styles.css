@@ -7,6 +7,9 @@
   --accent: #ff6f61;
   --accent-2: #3dd3c1;
   --shadow: 0 20px 40px rgba(0, 0, 0, 0.22);
+  --bg-grad-start: #4f6df5;
+  --bg-grad-mid: #1f2235;
+  --bg-grad-end: #0c0e1f;
 }
 
 * {
@@ -16,9 +19,32 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at top left, #4f6df5 0%, #1f2235 45%, #0c0e1f 100%);
+  background: radial-gradient(circle at top left, var(--bg-grad-start) 0%, var(--bg-grad-mid) 45%, var(--bg-grad-end) 100%);
   color: var(--text);
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Feminine / alternate theme: soft purples, pinks, warm golds */
+.theme-feminine {
+  --bg-grad-start: #8b5cf6;
+  --bg-grad-mid: #5b2f8a;
+  --bg-grad-end: #22102a;
+  --panel: #35263f;
+  --panel-alt: #3e2a4a;
+  --text: #faf6ff;
+  --muted: #efdff6;
+  --accent: #f7c873; /* warm gold */
+  --accent-2: #e79acb; /* soft pink */
+}
+
+.session-controls {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+#theme-toggle[aria-pressed="true"] {
+  box-shadow: 0 6px 18px rgba(0,0,0,0.2);
 }
 
 .app-shell {
