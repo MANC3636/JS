@@ -1,0 +1,15 @@
+{
+  "name": "math-arcade-backend",
+  "version": "0.1.0",
+  "description": "Netlify Functions backend for Math Arcade demo (local sqlite).",
+  "main": "index.js",
+  "scripts": {
+    "start": "netlify dev"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.6",
+    "exceljs": "^4.3.0",
+    "nodemailer": "^6.9.3",
+    "uuid": "^9.0.0"
+  }
+}

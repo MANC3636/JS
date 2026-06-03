@@ -199,3 +199,43 @@ button:hover {
     align-items: flex-start;
   }
 }
+
+/* Additional UI styles for admin/analytics */
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.form-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.meta {
+  margin-top: 10px;
+  color: var(--muted);
+}
+#register-panel label,
+#analytics-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.report {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+.report th, .report td {
+  padding: 8px 10px;
+  border: 1px solid rgba(255,255,255,0.06);
+  text-align: left;
+  background: rgba(255,255,255,0.02);
+  color: var(--text);
+}
+.report thead th {
+  background: rgba(67,193,255,0.08);
+}
+
+.container footer { margin-top: 16px; text-align: center; color: var(--muted); }

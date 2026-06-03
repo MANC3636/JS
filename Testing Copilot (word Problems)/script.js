@@ -16,6 +16,11 @@ const failureSound = document.getElementById('failure-sound');
 const hitSound = document.getElementById('hit-sound');
 const ctx = gameCanvas.getContext('2d');
 
+// --- Admin & panel elements ---
+const registerPanel = document.getElementById('register-panel');
+const analyticsPanel = document.getElementById('analytics-panel');
+const ADMIN_EMAIL = 'admin@example.com'; // change to your admin email
+
 let questions = [];
 let grade = null;
 let userGender = 'none';
@@ -863,6 +868,372 @@ function updatePacman() {
     }, 1200);
   }
 }
+
+// -------------------------
+// Usage tracking & analytics
+// -------------------------
+
+// Simple localStorage-backed data model for demo purposes
+function getUsers() {
+  return JSON.parse(localStorage.getItem('wc_users') || '[]');
+}
+function saveUsers(users) {
+  localStorage.setItem('wc_users', JSON.stringify(users));
+}
+function getSessions() {
+  return JSON.parse(localStorage.getItem('wc_sessions') || '[]');
+}
+function saveSessions(sessions) {
+  localStorage.setItem('wc_sessions', JSON.stringify(sessions));
+}
+
+function uid() {
+  return 'u' + Date.now() + Math.floor(Math.random() * 1000);
+}
+
+const registerForm = document.getElementById('register-form');
+const currentUserEl = document.getElementById('current-user');
+const sessionStatusEl = document.getElementById('session-status');
+const logoutBtn = document.getElementById('logout-btn');
+const analyticsUserSel = document.getElementById('analytics-user');
+const timeRangeSel = document.getElementById('time-range');
+const getAnalyticsBtn = document.getElementById('get-analytics');
+const downloadCsvBtn = document.getElementById('download-csv');
+const analyticsResults = document.getElementById('analytics-results');
+
+let trackingStart = null;
+let backendAvailable = false;
+let backendSessionId = null;
+let heartbeatInterval = null;
+const HEARTBEAT_MS = 60 * 1000; // 1 minute
+const MERGE_GAP_MS = 2 * 60 * 1000; // if resumed within 2 minutes, merge
+
+function getCurrentUserId() {
+  return localStorage.getItem('wc_current_user') || null;
+}
+function setCurrentUserId(id) {
+  if (id) localStorage.setItem('wc_current_user', id); else localStorage.removeItem('wc_current_user');
+}
+
+function renderCurrentUser() {
+  const id = getCurrentUserId();
+  const users = getUsers();
+  const u = users.find(x => x.id === id);
+  if (u) {
+    currentUserEl.textContent = `Logged in: ${u.username} (${u.email}, grade ${u.grade})`;
+    logoutBtn.classList.remove('hidden');
+    startTracking();
+    // show grade selection (behind registration)
+    showScreen(gradeScreen);
+    // show analytics only for admin
+    if (u.email && u.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+      analyticsPanel.classList.remove('hidden');
+    } else {
+      analyticsPanel.classList.add('hidden');
+    }
+  } else {
+    currentUserEl.textContent = '';
+    logoutBtn.classList.add('hidden');
+    stopTracking();
+    // show registration panel when not logged in
+    showScreen(registerPanel);
+    analyticsPanel.classList.add('hidden');
+  }
+}
+
+registerForm && registerForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const email = document.getElementById('email').value.trim();
+  const grade = document.getElementById('grade').value;
+  const username = document.getElementById('username').value.trim();
+  if (!email || !username) return alert('Please provide email and username');
+  const users = getUsers();
+  let user = users.find(x => x.email === email || x.username === username);
+  if (!user) {
+    user = { id: uid(), email, grade, username, createdAt: Date.now() };
+    users.push(user);
+    saveUsers(users);
+  }
+  setCurrentUserId(user.id);
+  populateAnalyticsUsers();
+  renderCurrentUser();
+});
+
+logoutBtn && logoutBtn.addEventListener('click', () => {
+  const id = getCurrentUserId();
+  if (id) {
+    // close any open session
+    endSessionForUser(id);
+  }
+  setCurrentUserId(null);
+  renderCurrentUser();
+});
+
+function startTracking() {
+  if (trackingStart) return; // already tracking
+  const id = getCurrentUserId();
+  if (!id) return;
+  trackingStart = Date.now();
+  sessionStatusEl.textContent = 'Tracking active';
+  document.addEventListener('visibilitychange', handleVisibility);
+  window.addEventListener('beforeunload', handleBeforeUnload);
+  // try to use backend
+  ensureBackend().then(() => {
+    if (!backendAvailable) return;
+    // start session on backend
+    fetch('/.netlify/functions/session', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'start', userId: id }) })
+      .then(r => r.json()).then(j => { backendSessionId = j.sessionId; })
+      .catch(()=>{});
+    // start heartbeat
+    heartbeatInterval = setInterval(() => sendHeartbeat(id), HEARTBEAT_MS);
+  });
+}
+
+function stopTracking() {
+  if (!trackingStart) return;
+  const id = getCurrentUserId();
+  const now = Date.now();
+  const sessions = getSessions();
+  sessions.push({ id: uid(), userId: id, start: trackingStart, end: now });
+  saveSessions(sessions);
+  trackingStart = null;
+  sessionStatusEl.textContent = 'Not tracking';
+  document.removeEventListener('visibilitychange', handleVisibility);
+  window.removeEventListener('beforeunload', handleBeforeUnload);
+  // stop backend session
+  if (backendAvailable && backendSessionId && id) {
+    fetch('/.netlify/functions/session', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'stop', userId: id, sessionId: backendSessionId }) })
+      .catch(()=>{});
+    backendSessionId = null;
+  }
+  if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; }
+}
+
+function handleVisibility() {
+  if (document.hidden) {
+    // pause session
+    const id = getCurrentUserId();
+    if (!id || !trackingStart) return;
+    const now = Date.now();
+    const sessions = getSessions();
+    sessions.push({ id: uid(), userId: id, start: trackingStart, end: now });
+    saveSessions(sessions);
+    trackingStart = null;
+    sessionStatusEl.textContent = 'Paused (tab hidden)';
+    // stop backend session
+    if (backendAvailable && backendSessionId && id) {
+      fetch('/.netlify/functions/session', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'stop', userId: id, sessionId: backendSessionId }) }).catch(()=>{});
+      backendSessionId = null;
+    }
+  } else {
+    // resume
+    if (!getCurrentUserId()) return;
+    const now = Date.now();
+    // if resumed quickly after pause, merge locally by subtracting small gap
+    const last = getSessions().slice(-1)[0];
+    if (last && last.userId === getCurrentUserId() && Math.abs(now - last.end) <= MERGE_GAP_MS) {
+      // extend last session by setting trackingStart to last.start
+      trackingStart = last.start;
+      // remove last as it will be re-recorded on stop
+      const s = getSessions(); s.pop(); saveSessions(s);
+    } else {
+      trackingStart = now;
+    }
+    sessionStatusEl.textContent = 'Tracking active';
+    // start backend session and heartbeat
+    ensureBackend().then(() => {
+      if (!backendAvailable) return;
+      const id = getCurrentUserId();
+      fetch('/.netlify/functions/session', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'start', userId: id }) })
+        .then(r => r.json()).then(j => { backendSessionId = j.sessionId; }).catch(()=>{});
+      if (heartbeatInterval) clearInterval(heartbeatInterval);
+      heartbeatInterval = setInterval(() => sendHeartbeat(getCurrentUserId()), HEARTBEAT_MS);
+    });
+  }
+}
+
+function handleBeforeUnload() {
+  stopTracking();
+}
+
+function endSessionForUser(userId) {
+  // if trackingStart exists for current user, close it
+  if (getCurrentUserId() === userId && trackingStart) {
+    stopTracking();
+    return;
+  }
+}
+
+async function ensureBackend() {
+  if (backendAvailable) return true;
+  try {
+    const resp = await fetch('/.netlify/functions/analytics?ping=1');
+    if (resp.ok) backendAvailable = true;
+  } catch (e) { backendAvailable = false; }
+  return backendAvailable;
+}
+
+function sendHeartbeat(userId) {
+  if (!userId) return;
+  if (backendAvailable) {
+    fetch('/.netlify/functions/session', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'heartbeat', userId }) }).catch(()=>{});
+  }
+}
+
+// Analytics helpers
+function populateAnalyticsUsers() {
+  const users = getUsers();
+  analyticsUserSel.innerHTML = '<option value="all">All users</option>' + users.map(u => `<option value="${u.id}">${u.username} (${u.email})</option>`).join('');
+}
+
+function startOfDay(ts) { const d = new Date(ts); d.setHours(0,0,0,0); return d.getTime(); }
+function startOfWeek(ts) { const d = new Date(ts); const day = d.getDay(); const diff = d.getDate() - day + (day === 0 ? -6 : 1); d.setDate(diff); d.setHours(0,0,0,0); return d.getTime(); }
+function startOfMonth(ts) { const d = new Date(ts); d.setDate(1); d.setHours(0,0,0,0); return d.getTime(); }
+
+function computeRange(range) {
+  const now = Date.now();
+  if (range === 'day') return { start: startOfDay(now), end: now };
+  if (range === 'week') return { start: startOfWeek(now), end: now };
+  if (range === 'month') return { start: startOfMonth(now), end: now };
+  if (range === 'last7') return { start: startOfDay(now - 6 * 24 * 60 * 60 * 1000), end: now };
+  return { start: 0, end: now };
+}
+
+function overlapDuration(sStart, sEnd, rangeStart, rangeEnd) {
+  const a = Math.max(sStart, rangeStart);
+  const b = Math.min(sEnd || Date.now(), rangeEnd);
+  return Math.max(0, b - a);
+}
+
+function formatMinutes(ms) {
+  return Math.round(ms / 60000 * 100) / 100; // 2 decimal minutes
+}
+
+function getReport(range) {
+  const users = getUsers();
+  const sessions = getSessions();
+  const { start, end } = computeRange(range);
+  const res = [];
+  users.forEach((u) => {
+    const userSessions = sessions.filter(s => s.userId === u.id);
+    let totalMs = 0;
+    if (range === 'last7') {
+      // per-day columns for last 7 days
+      const days = [];
+      for (let i = 6; i >= 0; i--) {
+        const dayStart = startOfDay(Date.now() - i * 24 * 60 * 60 * 1000);
+        const dayEnd = dayStart + 24 * 60 * 60 * 1000 - 1;
+        const ms = userSessions.reduce((acc, s) => acc + overlapDuration(s.start, s.end, dayStart, dayEnd), 0);
+        days.push(ms);
+        totalMs += ms;
+      }
+      res.push({ user: u, days, totalMs });
+    } else {
+      totalMs = userSessions.reduce((acc, s) => acc + overlapDuration(s.start, s.end, start, end), 0);
+      res.push({ user: u, totalMs });
+    }
+  });
+  return res;
+}
+
+function renderReport(range, userFilter) {
+  const report = getReport(range);
+  let rows = '';
+  if (range === 'last7') {
+    // header
+    const headers = ['Username','Email','Grade'];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      headers.push(d.toISOString().slice(0,10));
+    }
+    headers.push('Total (min)');
+    rows += `<table class="report"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>`;
+    report.forEach(r => {
+      if (userFilter && userFilter !== 'all' && r.user.id !== userFilter) return;
+      const dayCols = r.days.map(ms => `<td>${formatMinutes(ms)}</td>`).join('');
+      rows += `<tr><td>${r.user.username}</td><td>${r.user.email}</td><td>${r.user.grade}</td>${dayCols}<td>${formatMinutes(r.totalMs)}</td></tr>`;
+    });
+    rows += '</tbody></table>';
+  } else {
+    rows += `<table class="report"><thead><tr><th>Username</th><th>Email</th><th>Grade</th><th>Minutes</th></tr></thead><tbody>`;
+    report.forEach(r => {
+      if (userFilter && userFilter !== 'all' && r.user.id !== userFilter) return;
+      rows += `<tr><td>${r.user.username}</td><td>${r.user.email}</td><td>${r.user.grade}</td><td>${formatMinutes(r.totalMs)}</td></tr>`;
+    });
+    rows += '</tbody></table>';
+  }
+  analyticsResults.innerHTML = rows + `<div class="meta">Users: ${getUsers().length}</div>`;
+  downloadCsvBtn.classList.remove('hidden');
+}
+
+getAnalyticsBtn && getAnalyticsBtn.addEventListener('click', () => {
+  const range = timeRangeSel.value;
+  const userFilter = analyticsUserSel.value;
+  // prefer backend-generated report
+  ensureBackend().then((ok) => {
+    if (ok) {
+      // request CSV from backend and open
+      const params = new URLSearchParams({ range, userId: userFilter === 'all' ? '' : userFilter, format: 'csv' });
+      fetch('/.netlify/functions/analytics?' + params.toString()).then(r => r.text()).then(text => {
+        analyticsResults.innerHTML = '<pre class="meta">Backend CSV received. Use download to save.</pre>';
+        downloadCsvBtn.classList.remove('hidden');
+        // store last CSV in memory for download via front-end if necessary
+        window._lastCSV = { text, range };
+      }).catch(() => renderReport(range, userFilter));
+    } else {
+      renderReport(range, userFilter);
+    }
+  });
+});
+
+downloadCsvBtn && downloadCsvBtn.addEventListener('click', () => {
+  const range = timeRangeSel.value;
+  const userFilter = analyticsUserSel.value;
+  // if backend available, request xlsx, else fall back to client CSV
+  ensureBackend().then(ok => {
+    if (ok) {
+      const params = new URLSearchParams({ range, userId: userFilter === 'all' ? '' : userFilter, format: 'xlsx' });
+      const url = '/.netlify/functions/analytics?' + params.toString();
+      window.open(url, '_blank');
+    } else {
+      const report = getReport(range).filter(r => userFilter === 'all' ? true : r.user.id === userFilter);
+      const lines = [];
+      if (range === 'last7') {
+        const header = ['Username','Email','Grade'];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(); d.setDate(d.getDate() - i);
+          header.push(d.toISOString().slice(0,10));
+        }
+        header.push('Total (min)');
+        lines.push(header.join(','));
+        report.forEach(r => {
+          const row = [r.user.username, r.user.email, r.user.grade].concat(r.days.map(ms => formatMinutes(ms)), formatMinutes(r.totalMs));
+          lines.push(row.join(','));
+        });
+      } else {
+        lines.push(['Username','Email','Grade','Minutes'].join(','));
+        report.forEach(r => {
+          lines.push([r.user.username, r.user.email, r.user.grade, formatMinutes(r.totalMs)].join(','));
+        });
+      }
+      const csv = lines.join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const u = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = u;
+      a.download = `analytics_${timeRangeSel.value}_${new Date().toISOString().slice(0,10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(u);
+    }
+  });
+});
+
+// Initialize
+populateAnalyticsUsers();
+renderCurrentUser();
+
 
 function drawPacman() {
   ctx.fillStyle = '#000';

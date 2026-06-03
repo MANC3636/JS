@@ -124,7 +124,7 @@ function getFilteredUsage(logs, { timeframe = 'week', query = '' } = {}) {
         ? new Date(`${entry.dayOf}T00:00:00`)
         : null;
     const inTimeframe = (() => {
-      if (!timestamp) return true;
+      if (!timestamp) return false;
       const entryDay = timestamp.toISOString().slice(0, 10);
       const weekOfCurrent = ex.getWeekLabel(now);
       const monthOfCurrent = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -166,6 +166,28 @@ function countUniqueUsers(logs) {
   return new Set(logs.map((entry) => auth.normalizeEmail(entry.email))).size;
 }
 
+function aggregateByStudent(logs) {
+  const studentMap = {};
+  logs.forEach((entry) => {
+    const key = auth.normalizeEmail(entry.email);
+    if (!studentMap[key]) {
+      studentMap[key] = {
+        firstName: entry.firstName,
+        lastName: entry.lastName,
+        grade: entry.grade,
+        email: entry.email,
+        usageMinutes: 0,
+        weekOf: entry.weekOf || '',
+        dayOf: entry.dayOf || '',
+        monthOf: entry.monthOf || '',
+        timestamp: entry.timestamp || '',
+      };
+    }
+    studentMap[key].usageMinutes += entry.usageMinutes || 0;
+  });
+  return Object.values(studentMap);
+}
+
 function renderReportTable(rows) {
   reportTableBody.innerHTML = '';
   if (rows.length === 0) {
@@ -196,10 +218,11 @@ function updateReportView() {
     timeframe: reportTimeframe?.value || 'week',
     query: reportSearch?.value || '',
   };
-  const rows = getFilteredUsage(logs, filters);
-  reportRowsCount.textContent = rows.length;
-  reportUniqueCount.textContent = countUniqueUsers(rows);
-  renderReportTable(rows);
+  const filteredRows = getFilteredUsage(logs, filters);
+  const aggregatedRows = aggregateByStudent(filteredRows);
+  reportRowsCount.textContent = aggregatedRows.length;
+  reportUniqueCount.textContent = countUniqueUsers(filteredRows);
+  renderReportTable(aggregatedRows);
 }
 
 function downloadFilteredReport() {

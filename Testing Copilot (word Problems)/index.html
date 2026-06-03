@@ -13,7 +13,7 @@
       <p>Solve the math problems correctly to play Pong, Snake, Pacman, or other game for 2 minutes.</p>
     </header>
 
-    <section id="grade-screen" class="card">
+    <section id="grade-screen" class="card hidden">
       <h2>Select your grade</h2>
       <div class="preference-panel">
         <div class="preference-group">
@@ -35,6 +35,72 @@
         <button class="grade-btn" data-grade="4">4th Grade</button>
         <button class="grade-btn" data-grade="5">5th Grade</button>
       </div>
+    </section>
+    
+    <!-- Admin / Registration panels -->
+    <section id="register-panel" class="card">
+      <h2>Register / Login</h2>
+      <form id="register-form">
+        <label>Email
+          <input type="email" id="email" required />
+        </label>
+        <label>Grade
+          <select id="grade">
+            <option value="">Select grade</option>
+            <option>1</option>
+            <option>2</option>
+            <option>3</option>
+            <option>4</option>
+            <option>5</option>
+            <option>6</option>
+            <option>7</option>
+            <option>8</option>
+            <option>9</option>
+            <option>10</option>
+            <option>11</option>
+            <option>12</option>
+          </select>
+        </label>
+        <label>Username
+          <input type="text" id="username" required />
+        </label>
+        <div class="form-actions">
+          <button type="submit">Register & Login</button>
+          <button type="button" id="logout-btn" class="hidden">Logout</button>
+        </div>
+      </form>
+      <div id="current-user" class="meta"></div>
+    </section>
+
+    <section id="activity-panel" class="card">
+      <h2>Activity</h2>
+      <p>When logged in, your active time in this page is tracked automatically.</p>
+      <div class="meta" id="session-status">Not tracking</div>
+    </section>
+
+    <section id="analytics-panel" class="card hidden">
+      <h2>Admin Analytics</h2>
+      <div class="row">
+        <label>Report user
+          <select id="analytics-user">
+            <option value="all">All users</option>
+          </select>
+        </label>
+        <label>Time range
+          <select id="time-range">
+            <option value="day">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="last7">Last 7 Days</option>
+            <option value="total">Complete Total</option>
+          </select>
+        </label>
+        <div class="form-actions">
+          <button id="get-analytics">Get Analytics</button>
+          <button id="download-csv" class="hidden">Download CSV</button>
+        </div>
+      </div>
+      <div id="analytics-results"></div>
     </section>
 
     <section id="quiz-screen" class="card hidden">
