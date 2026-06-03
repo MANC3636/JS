@@ -16,6 +16,7 @@ export function createGameController({ canvas, scoreDisplay, timerDisplay, onEnd
   let ballVisible = true;
   let ballInZone = false;
   let gameMode = 'normal';
+  let ghostLevel = Number(sessionStorage.getItem('sisyphusGhostLevel')) || 1;
 
   function formatTimer(seconds) {
     const mins = Math.floor(seconds / 60);
@@ -28,9 +29,35 @@ export function createGameController({ canvas, scoreDisplay, timerDisplay, onEnd
     ballInZone = false;
     const width = canvas.width;
     const height = canvas.height;
-    playerPaddle = { x: 20, y: height / 2 - 50, width: 16, height: 100, speed: 8 };
-    aiPaddle = { x: width - 36, y: height / 2 - 50, width: 16, height: 100, speed: 4 };
+    // base paddle sizes
+    const baseHeight = 100;
+    playerPaddle = { x: 20, y: height / 2 - baseHeight / 2, width: 16, height: baseHeight, speed: 8 };
+    aiPaddle = { x: width - 36, y: height / 2 - baseHeight / 2, width: 16, height: baseHeight, speed: 4 };
     ball = { x: width / 2, y: height / 2, radius: 10, speedX: 5, speedY: 3 };
+    applyPaddleScaling();
+  }
+
+  function applyPaddleScaling() {
+    // default full-size
+    let scale = 1;
+    if (gameMode === 'ghost') {
+      if (ghostLevel >= 2) scale = 0.5;
+      if (currentScore > 15) scale = 0.25;
+    }
+    const height = canvas.height;
+    const baseHeight = 100;
+    const newHeight = Math.max(16, Math.floor(baseHeight * scale));
+    // keep paddle center positions stable
+    if (playerPaddle) {
+      const center = playerPaddle.y + playerPaddle.height / 2;
+      playerPaddle.height = newHeight;
+      playerPaddle.y = Math.max(0, Math.min(height - playerPaddle.height, center - playerPaddle.height / 2));
+    }
+    if (aiPaddle) {
+      const center = aiPaddle.y + aiPaddle.height / 2;
+      aiPaddle.height = newHeight;
+      aiPaddle.y = Math.max(0, Math.min(height - aiPaddle.height, center - aiPaddle.height / 2));
+    }
   }
 
   function drawRoundedRect(x, y, w, h, radius, fill) {
@@ -64,16 +91,30 @@ export function createGameController({ canvas, scoreDisplay, timerDisplay, onEnd
     ctx.setLineDash([]);
 
     if (remainingSeconds <= 15) {
-      if (Math.floor(Date.now() / 250) % 2 === 0) {
+      const flashPref = sessionStorage.getItem('sisyphusFlash') || localStorage.getItem('sisyphusFlash') || 'flash';
+      if (flashPref === 'solid') {
         ctx.strokeStyle = 'rgba(255, 68, 68, 0.85)';
         ctx.lineWidth = 8;
         ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+      } else {
+        if (Math.floor(Date.now() / 250) % 2 === 0) {
+          ctx.strokeStyle = 'rgba(255, 68, 68, 0.85)';
+          ctx.lineWidth = 8;
+          ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+        }
       }
     } else if (remainingSeconds <= 30) {
-      if (Math.floor(Date.now() / 500) % 2 === 0) {
+      const flashPref = sessionStorage.getItem('sisyphusFlash') || localStorage.getItem('sisyphusFlash') || 'flash';
+      if (flashPref === 'solid') {
         ctx.strokeStyle = 'rgba(255, 215, 0, 0.75)';
         ctx.lineWidth = 8;
         ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+      } else {
+        if (Math.floor(Date.now() / 500) % 2 === 0) {
+          ctx.strokeStyle = 'rgba(255, 215, 0, 0.75)';
+          ctx.lineWidth = 8;
+          ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
+        }
       }
     }
 
@@ -101,7 +142,11 @@ export function createGameController({ canvas, scoreDisplay, timerDisplay, onEnd
       ballVisible = true;
       sndPlayerHit();
       currentScore += 1;
+      // persist score for the session
+      try { sessionStorage.setItem('sisyphusGameScore', String(currentScore)); } catch (e) { /* ignore */ }
       if (scoreDisplay) scoreDisplay.textContent = `Score: ${currentScore}`;
+      // re-evaluate paddle sizes if ghost mode
+      applyPaddleScaling();
     }
 
     if (ball.x + ball.radius >= aiPaddle.x && ball.y >= aiPaddle.y && ball.y <= aiPaddle.y + aiPaddle.height) {
@@ -161,7 +206,9 @@ export function createGameController({ canvas, scoreDisplay, timerDisplay, onEnd
   function startGame(mode = 'normal') {
     gameMode = mode === 'ghost' ? 'ghost' : 'normal';
     gameActive = true;
-    currentScore = 0;
+    // restore session score if present
+    const stored = Number(sessionStorage.getItem('sisyphusGameScore')) || 0;
+    currentScore = stored;
     if (scoreDisplay) scoreDisplay.textContent = `Score: ${currentScore}`;
     remainingSeconds = gameDuration;
     clearTimerWarning();
@@ -185,13 +232,19 @@ export function createGameController({ canvas, scoreDisplay, timerDisplay, onEnd
     animationFrameId = requestAnimationFrame(drawGame);
   }
 
+  function setGhostLevel(level) {
+    ghostLevel = Number(level) || 1;
+    try { sessionStorage.setItem('sisyphusGhostLevel', String(ghostLevel)); } catch (e) { /* ignore */ }
+    applyPaddleScaling();
+  }
+
   function setPaddlePosition(clientY) {
     const rect = canvas.getBoundingClientRect();
     const relativeY = clientY - rect.top;
     playerPaddle.y = Math.max(0, Math.min(canvas.height - playerPaddle.height, (relativeY / rect.height) * canvas.height - playerPaddle.height / 2));
   }
 
-  return { startGame, endGame, setPaddlePosition };
+  return { startGame, endGame, setPaddlePosition, setGhostLevel };
 }
 
 export default { createGameController };

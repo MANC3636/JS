@@ -21,9 +21,12 @@ export function findStudentByEmail(email) {
 export function logStudentUsage(student, action, sessionStartTimestamp = null) {
   if (!student) return;
   const logs = ex.getUsageLog();
+  const now = new Date();
   const usageMinutes = sessionStartTimestamp
     ? Math.max(0, Math.round((Date.now() - sessionStartTimestamp) / 60000))
     : 0;
+  const dayOf = now.toISOString().slice(0, 10);
+  const monthOf = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
   logs.push({
     email: normalizeEmail(student.email),
@@ -32,7 +35,10 @@ export function logStudentUsage(student, action, sessionStartTimestamp = null) {
     grade: student.grade,
     action,
     usageMinutes,
-    weekOf: ex.getWeekLabel(new Date()),
+    timestamp: now.toISOString(),
+    dayOf,
+    weekOf: ex.getWeekLabel(now),
+    monthOf,
   });
   ex.saveUsageLog(logs);
 }

@@ -31,6 +31,15 @@ const timerDisplay = document.getElementById('game-timer');
 const scoreDisplay = document.getElementById('game-score');
 const restrictedExportRow = document.getElementById('restricted-export-row');
 const restrictedSchedulerDesign = document.getElementById('restricted-scheduler-design');
+const reportSection = document.getElementById('report-section');
+const reportTimeframe = document.getElementById('report-timeframe');
+const reportSearch = document.getElementById('report-search');
+const reportSearchBtn = document.getElementById('report-search-btn');
+const reportTableBody = document.getElementById('report-table-body');
+const reportDownloadBtn = document.getElementById('report-download-btn');
+const showReportBtn = document.getElementById('show-report-btn');
+const reportUniqueCount = document.getElementById('report-unique-count');
+const reportRowsCount = document.getElementById('report-rows-count');
 const gameModePicker = document.getElementById('game-mode-picker');
 const normalPongBtn = document.getElementById('normal-pong-btn');
 const ghostPongBtn = document.getElementById('ghost-pong-btn');
@@ -42,6 +51,10 @@ const topicDecimalsBtn = document.getElementById('topic-decimals-btn');
 const topicFractionsBtn = document.getElementById('topic-fractions-btn');
 const quizDescription = document.getElementById('quiz-description');
 const canvas = document.getElementById('pong-canvas');
+const levelUpBtn = document.getElementById('level-up-btn');
+const flashWarning = document.getElementById('flash-warning');
+const solidLightsBtn = document.getElementById('solid-lights-btn');
+const allowFlashBtn = document.getElementById('allow-flash-btn');
 
 // State
 let activeStudent = null;
@@ -97,6 +110,119 @@ function updateRestrictedAccess(student) {
   const allowed = isAuthorizedStudent(student);
   restrictedExportRow.classList.toggle('hidden', !allowed);
   restrictedSchedulerDesign.classList.toggle('hidden', !allowed);
+  reportSection.classList.toggle('hidden', !allowed);
+}
+
+function getFilteredUsage(logs, { timeframe = 'week', query = '' } = {}) {
+  const now = new Date();
+  const normalizedQuery = query.trim().toLowerCase();
+
+  return logs.filter((entry) => {
+    const timestamp = entry.timestamp
+      ? new Date(entry.timestamp)
+      : entry.dayOf
+        ? new Date(`${entry.dayOf}T00:00:00`)
+        : null;
+    const inTimeframe = (() => {
+      if (!timestamp) return true;
+      const entryDay = timestamp.toISOString().slice(0, 10);
+      const weekOfCurrent = ex.getWeekLabel(now);
+      const monthOfCurrent = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const diffMs = now - timestamp;
+      const last7DaysMs = 7 * 24 * 60 * 60 * 1000;
+
+      if (timeframe === 'today') {
+        return entryDay === now.toISOString().slice(0, 10);
+      }
+      if (timeframe === 'week') {
+        return entry.timestamp ? entry.weekOf === weekOfCurrent : entry.weekOf === weekOfCurrent;
+      }
+      if (timeframe === 'last7') {
+        return diffMs >= 0 && diffMs < last7DaysMs;
+      }
+      if (timeframe === 'month') {
+        return entry.monthOf ? entry.monthOf === monthOfCurrent : entryDay.slice(0, 7) === monthOfCurrent;
+      }
+      return true;
+    })();
+
+    if (!inTimeframe) return false;
+
+    if (!normalizedQuery) return true;
+    return [
+      entry.firstName,
+      entry.lastName,
+      entry.email,
+      entry.grade,
+      entry.action,
+      entry.dayOf,
+      entry.weekOf,
+      entry.monthOf,
+    ].some((value) => String(value || '').toLowerCase().includes(normalizedQuery));
+  });
+}
+
+function countUniqueUsers(logs) {
+  return new Set(logs.map((entry) => auth.normalizeEmail(entry.email))).size;
+}
+
+function renderReportTable(rows) {
+  reportTableBody.innerHTML = '';
+  if (rows.length === 0) {
+    reportTableBody.innerHTML = '<tr><td colspan="7">No usage entries match the selected filters.</td></tr>';
+    return;
+  }
+
+  rows.slice(0, 200).forEach((entry) => {
+    const row = document.createElement('tr');
+    const date = entry.dayOf || (entry.timestamp ? entry.timestamp.slice(0, 10) : 'n/a');
+    row.innerHTML = `
+      <td>${date}</td>
+      <td>${entry.weekOf || ''}</td>
+      <td>${entry.firstName} ${entry.lastName}</td>
+      <td>${entry.grade}</td>
+      <td>${entry.email}</td>
+      <td>${entry.action}</td>
+      <td>${entry.usageMinutes}</td>
+    `;
+    reportTableBody.appendChild(row);
+  });
+}
+
+function updateReportView() {
+  if (!reportSection || reportSection.classList.contains('hidden')) return;
+  const logs = ex.getUsageLog();
+  const filters = {
+    timeframe: reportTimeframe?.value || 'week',
+    query: reportSearch?.value || '',
+  };
+  const rows = getFilteredUsage(logs, filters);
+  reportRowsCount.textContent = rows.length;
+  reportUniqueCount.textContent = countUniqueUsers(rows);
+  renderReportTable(rows);
+}
+
+function downloadFilteredReport() {
+  const logs = ex.getUsageLog();
+  const filters = {
+    timeframe: reportTimeframe?.value || 'week',
+    query: reportSearch?.value || '',
+  };
+  const rows = getFilteredUsage(logs, filters);
+  if (rows.length === 0) {
+    showAuthFeedback(registerFeedback, 'No filtered records are available to download.', false);
+    return;
+  }
+  const blob = ex.createUsageReportCsvBlob(rows);
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'filtered_usage_report.csv';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+  showAuthFeedback(registerFeedback, 'Filtered usage report downloaded as CSV.', true);
 }
 
 function setActiveStudent(student, { restoreTimestamp = false, rememberMe = false } = {}) {
@@ -239,6 +365,11 @@ quizForm.addEventListener('submit', (event) => {
     setTimeout(sound.sndQuizPassed, summaryDelay * 1000);
     showFeedback(`Great job! You got ${correctCount}/4 correct. Choose your pong mode below!`, true);
     gameModePicker.classList.remove('hidden');
+    // show flash-warning if user hasn't chosen a preference
+    const pref = localStorage.getItem('sisyphusFlash') || sessionStorage.getItem('sisyphusFlash');
+    if (flashWarning) {
+      if (pref) flashWarning.classList.add('hidden'); else flashWarning.classList.remove('hidden');
+    }
     gameModePicker.scrollIntoView({ behavior: 'smooth' });
   } else {
     setTimeout(sound.sndQuizFailed, summaryDelay * 1000);
@@ -318,6 +449,56 @@ ghostPongBtn.addEventListener('click', () => {
   quizSection.classList.add('hidden');
 });
 
+// Ghost level UI: toggle between level 1 and 2; persist in session
+function getGhostLevel() {
+  return Number(sessionStorage.getItem('sisyphusGhostLevel')) || 1;
+}
+
+function updateLevelButtonText() {
+  if (!levelUpBtn) return;
+  const lvl = getGhostLevel();
+  levelUpBtn.textContent = `Level: ${lvl}`;
+}
+
+if (levelUpBtn) {
+  updateLevelButtonText();
+  levelUpBtn.addEventListener('click', () => {
+    const current = getGhostLevel();
+    const next = current >= 2 ? 1 : 2;
+    sessionStorage.setItem('sisyphusGhostLevel', String(next));
+    if (gameCtrl && typeof gameCtrl.setGhostLevel === 'function') gameCtrl.setGhostLevel(next);
+    updateLevelButtonText();
+    showFeedback(`Ghost Pong set to level ${next}.`, true);
+  });
+}
+
+// Flash warning buttons
+function getFlashPref() {
+  return sessionStorage.getItem('sisyphusFlash') || localStorage.getItem('sisyphusFlash') || null;
+}
+
+function setFlashPref(value) {
+  // persist to localStorage so preference survives reloads; sessionStorage also accepted
+  localStorage.setItem('sisyphusFlash', value);
+  try { sessionStorage.setItem('sisyphusFlash', value); } catch (e) { /* ignore */ }
+}
+
+if (solidLightsBtn) {
+  solidLightsBtn.addEventListener('click', () => {
+    setFlashPref('solid');
+    if (flashWarning) flashWarning.classList.add('hidden');
+    showFeedback('Solid lights enabled for the session.', true);
+  });
+}
+
+if (allowFlashBtn) {
+  allowFlashBtn.addEventListener('click', () => {
+    setFlashPref('flash');
+    if (flashWarning) flashWarning.classList.add('hidden');
+    showFeedback('Flashing lights allowed.', true);
+  });
+}
+
 registerTab.addEventListener('click', () => { registerTab.classList.add('active'); signInTab.classList.remove('active'); registerForm.classList.remove('hidden'); signInForm.classList.add('hidden'); });
 signInTab.addEventListener('click', () => { registerTab.classList.remove('active'); signInTab.classList.add('active'); registerForm.classList.add('hidden'); signInForm.classList.remove('hidden'); });
 
@@ -338,6 +519,29 @@ exportUsageBtn.addEventListener('click', () => {
   const link = document.createElement('a'); link.href = url; link.download = 'usage_history.csv'; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url);
   showAuthFeedback(registerFeedback, 'Usage history exported as CSV. You can open it in Excel.', true);
 });
+
+if (showReportBtn) {
+  showReportBtn.addEventListener('click', () => {
+    if (reportSection) {
+      reportSection.classList.toggle('hidden');
+      if (!reportSection.classList.contains('hidden')) updateReportView();
+    }
+  });
+}
+
+if (reportSearchBtn) {
+  reportSearchBtn.addEventListener('click', updateReportView);
+}
+
+if (reportTimeframe) {
+  reportTimeframe.addEventListener('change', () => {
+    /* time frame selection is applied when the user clicks Search */
+  });
+}
+
+if (reportDownloadBtn) {
+  reportDownloadBtn.addEventListener('click', downloadFilteredReport);
+}
 
 takeQuizBtn.addEventListener('click', () => { auth.logStudentUsage(activeStudent, 'quiz-start', sessionStartTimestamp); quizSection.classList.remove('hidden'); quizSection.scrollIntoView({ behavior: 'smooth' }); });
 

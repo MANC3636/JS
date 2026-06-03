@@ -38,9 +38,38 @@ export function createStudentsCsvBlob(students) {
 }
 
 export function createUsageCsvBlob(logs) {
-  const header = ['Week Of', 'Usage Minutes', 'First Name', 'Last Name', 'Grade', 'Email', 'Action'];
-  const rows = [header, ...logs.map((entry) => [entry.weekOf, entry.usageMinutes, entry.firstName, entry.lastName, entry.grade, entry.email, entry.action])];
+  const header = ['Timestamp', 'Day', 'Week Of', 'Month', 'Usage Minutes', 'First Name', 'Last Name', 'Grade', 'Email', 'Action'];
+  const rows = [header, ...logs.map((entry) => [
+    entry.timestamp || '',
+    entry.dayOf || '',
+    entry.weekOf || '',
+    entry.monthOf || '',
+    entry.usageMinutes,
+    entry.firstName,
+    entry.lastName,
+    entry.grade,
+    entry.email,
+    entry.action,
+  ])];
   const csvContent = rows.map(buildCsvRow).join('\r\n');
+  return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+}
+
+export function createUsageReportCsvBlob(rows) {
+  const header = ['Timestamp', 'Day', 'Week Of', 'Month', 'Usage Minutes', 'First Name', 'Last Name', 'Grade', 'Email', 'Action'];
+  const csvRows = [header, ...rows.map((entry) => [
+    entry.timestamp || '',
+    entry.dayOf || '',
+    entry.weekOf || '',
+    entry.monthOf || '',
+    entry.usageMinutes,
+    entry.firstName,
+    entry.lastName,
+    entry.grade,
+    entry.email,
+    entry.action,
+  ])];
+  const csvContent = csvRows.map(buildCsvRow).join('\r\n');
   return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
 }
 
@@ -73,5 +102,5 @@ export function getWeeklyReportSchedulerDesign() {
 
 export default {
   getStoredStudents, saveStoredStudents, getUsageLog, saveUsageLog, getWeekLabel, buildCsvRow,
-  createStudentsCsvBlob, createUsageCsvBlob, getWeeklyReportSchedulerDesign,
+  createStudentsCsvBlob, createUsageCsvBlob, createUsageReportCsvBlob, getWeeklyReportSchedulerDesign,
 };

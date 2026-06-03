@@ -112,6 +112,7 @@
         <div id="restricted-export-row" class="export-row hidden">
           <button id="export-data-btn" class="secondary-btn" type="button">Download Student Registry</button>
           <button id="export-usage-btn" class="secondary-btn" type="button">Download Usage History</button>
+          <button id="show-report-btn" class="secondary-btn" type="button">Show Usage Reports</button>
           <button id="take-quiz-btn" class="primary-btn hidden" type="button">Take the Quiz</button>
           <p class="export-note">Export student registration or usage data as Excel-readable CSV files.</p>
         </div>
@@ -127,6 +128,58 @@
               <li>This registry also keeps a weekly student usage log for monitoring action counts and active sessions.</li>
             </ul>
           </details>
+        </div>
+      </section>
+
+      <section class="card report-card hidden" id="report-section">
+        <div class="card-header">
+          <h2>Usage Reports</h2>
+          <p>Filter unique users and view individual or group usage by day, week, last 7 days, or month.</p>
+        </div>
+
+        <div class="report-controls">
+          <div class="control-group">
+            <label for="report-timeframe">Timeframe</label>
+            <select id="report-timeframe">
+              <option value="today">Today</option>
+              <option value="week" selected>This Week</option>
+              <option value="last7">Last 7 Days</option>
+              <option value="month">This Month</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label for="report-search">Search</label>
+            <input id="report-search" type="search" placeholder="Search by name, email, grade, or action" />
+          </div>
+
+          <div class="report-actions">
+            <button id="report-search-btn" class="secondary-btn" type="button">Search</button>
+            <button id="report-download-btn" class="primary-btn" type="button">Download Report</button>
+          </div>
+        </div>
+
+        <div class="report-summary" id="report-summary">
+          <p><strong id="report-rows-count">0</strong> activity rows</p>
+          <p><strong id="report-unique-count">0</strong> unique users</p>
+        </div>
+
+        <div class="report-table-wrapper">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Week Of</th>
+                <th>Student</th>
+                <th>Grade</th>
+                <th>Email</th>
+                <th>Action</th>
+                <th>Minutes</th>
+              </tr>
+            </thead>
+            <tbody id="report-table-body"></tbody>
+          </table>
+          <p class="report-note">Search individual or group usage by day, week, last seven days, or month. Download the filtered report for review.</p>
         </div>
       </section>
 
@@ -169,6 +222,7 @@
         <div class="game-status">
           <span id="game-timer">2:00</span>
           <span id="game-score">Score: 0</span>
+          <button id="level-up-btn" class="secondary-btn" type="button">Level: 1</button>
         </div>
         <canvas id="pong-canvas" width="640" height="380"></canvas>
         <div class="game-instructions">

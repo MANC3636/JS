@@ -203,6 +203,91 @@ body {
   font-size: 0.95rem;
 }
 
+.report-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: end;
+  margin-top: 18px;
+}
+
+.report-controls .control-group {
+  display: grid;
+  gap: 8px;
+}
+
+.report-controls label {
+  font-weight: 600;
+}
+
+.report-controls input,
+.report-controls select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.report-summary {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin: 18px 0;
+  color: var(--muted);
+}
+
+.report-summary p {
+  margin: 0;
+  font-size: 0.98rem;
+}
+
+.report-table-wrapper {
+  overflow-x: auto;
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 12px;
+}
+
+.report-table th,
+.report-table td {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 14px;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.report-table th {
+  color: var(--accent-2);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.report-table tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.report-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.94rem;
+}
+
+@media (max-width: 760px) {
+  .report-controls {
+    grid-template-columns: 1fr;
+  }
+}
+
 main {
   display: grid;
   grid-template-columns: 1fr 1fr;
