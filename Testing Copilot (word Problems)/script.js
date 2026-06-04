@@ -19,7 +19,7 @@ const ctx = gameCanvas.getContext('2d');
 // --- Admin & panel elements ---
 const registerPanel = document.getElementById('register-panel');
 const analyticsPanel = document.getElementById('analytics-panel');
-const ADMIN_EMAIL = 'admin@example.com'; // change to your admin email
+const ADMIN_EMAIL = 'tyson571us@yahoo.com'; // change to your admin email
 
 let questions = [];
 let grade = null;
@@ -177,11 +177,9 @@ function generateQuestions() {
 }
 
 function showScreen(screen) {
-  quizScreen.classList.add('hidden');
-  gameChoiceScreen.classList.add('hidden');
-  gameScreen.classList.add('hidden');
-  gradeScreen.classList.add('hidden');
-  screen.classList.remove('hidden');
+  // hide all panels with class 'card' then show the requested panel
+  document.querySelectorAll('.card').forEach(c => c.classList.add('hidden'));
+  if (screen && screen.classList) screen.classList.remove('hidden');
 }
 
 function applyThemeToScreens() {
@@ -1341,7 +1339,7 @@ function runGameLoop(timestamp) {
 function initApp() {
   setupThemeControls();
   applyThemeToScreens();
-  showScreen(gradeScreen);
+  showScreen(registerPanel);
 }
 
 initApp();
