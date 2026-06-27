@@ -20,7 +20,7 @@ export function createOneStepEquationWordProblem() {
     'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-equations-and-inequalities/cc-6th-one-step-add-sub-equations/v/adding-and-subtracting-the-same-thing-from-both-sides',
   ];
 
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < 10; i += 1) {
     const x = randomInt(5, 12);
     const b = randomInt(1, x - 1);
 
@@ -30,17 +30,22 @@ export function createOneStepEquationWordProblem() {
       `Sarah had x stickers. She used ${b} in a project and has ${x - b} remaining. What is x?`,
       `A store had x books. After selling ${b} books, ${x - b} remain on the shelf. What is x?`,
       `In a garden, x flowers were planted. ${b} flowers wilted, leaving ${x - b} healthy ones. What is x?`,
+      `The class started with x pencils. After distributing ${b} pencils to students, ${x - b} remain. How many pencils were there originally?`,
+      `A baker had x loaves. She sold ${b} loaves and had ${x - b} left to package. What was x?`,
+      `There were x paintings in a gallery. ${b} were sold and ${x - b} remain. What number was x?`,
+      `A teacher collected x permission slips. ${b} were missing, so ${x - b} were returned. What was x?`,
+      `A truck delivered x boxes. ${b} boxes were unloaded and ${x - b} stayed on the truck. How many boxes were on the truck?`,
     ];
 
     variations.push({
       prompt: prompts[i],
       answer: x,
       validate: (value) => Number(value) === x,
-      khanLink: khanLinks[i],
+      khanLink: khanLinks[i % khanLinks.length],
     });
   }
 
-  return { ...variations[randomInt(0, 4)], topicLabel: 'a one-step equation problem' };
+  return { ...variations[randomInt(0, variations.length - 1)], topicLabel: 'a one-step equation problem' };
 }
 
 /* Other generators (evaluate, write expression, ratio, decimals) follow same pattern */

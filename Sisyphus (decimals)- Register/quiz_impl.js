@@ -80,7 +80,7 @@ export function createOneStepEquationWordProblem() {
     'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-equations-and-inequalities/cc-6th-one-step-add-sub-equations/v/adding-and-subtracting-the-same-thing-from-both-sides',
   ];
 
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < 10; i += 1) {
     const x = randomInt(5, 12);
     const b = randomInt(1, x - 1);
 
@@ -90,17 +90,22 @@ export function createOneStepEquationWordProblem() {
       `Sarah had x stickers. She used ${b} in a project and has ${x - b} remaining. What is x?`,
       `A store had x books. After selling ${b} books, ${x - b} remain on the shelf. What is x?`,
       `In a garden, x flowers were planted. ${b} flowers wilted, leaving ${x - b} healthy ones. What is x?`,
+      `The class started with x pencils. After distributing ${b} pencils to students, ${x - b} remain. How many pencils were there originally?`,
+      `A baker had x loaves. She sold ${b} loaves and had ${x - b} left to package. What was x?`,
+      `There were x paintings in a gallery. ${b} were sold and ${x - b} remain. What number was x?`,
+      `A teacher collected x permission slips. ${b} were missing, so ${x - b} were returned. What was x?`,
+      `A truck delivered x boxes. ${b} boxes were unloaded and ${x - b} stayed on the truck. How many boxes were on the truck?`,
     ];
 
     variations.push({
       prompt: prompts[i],
       answer: x,
       validate: (value) => Number(value) === x,
-      khanLink: khanLinks[i],
+      khanLink: khanLinks[i % khanLinks.length],
     });
   }
 
-  return { ...variations[randomInt(0, 4)], topicLabel: 'a one-step equation problem' };
+  return { ...variations[randomInt(0, variations.length - 1)], topicLabel: 'a one-step equation problem' };
 }
 
 export function createEvaluateExpression() {
@@ -113,7 +118,7 @@ export function createEvaluateExpression() {
     'https://www.khanacademy.org/math/cc-sixth-grade-math/x0267d782:cc-6th-exponents-and-order-of-operations/x0267d782:more-on-order-of-operations/a/order-of-operations-review',
   ];
 
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < 10; i += 1) {
     const pointsPerGame = randomInt(2, 8);
     const bonus = randomInt(3, 10);
     const numGames = randomInt(3, 8);
@@ -124,6 +129,11 @@ export function createEvaluateExpression() {
       { subject: 'Sofia', activity: 'race', unit: 'seconds', action: 'saved a' },
       { subject: 'Jordan', activity: 'task', unit: 'stars', action: 'got a' },
       { subject: 'Alex', activity: 'round', unit: 'tokens', action: 'won a' },
+      { subject: 'Jamie', activity: 'match', unit: 'scores', action: 'scored' },
+      { subject: 'Taylor', activity: 'session', unit: 'points', action: 'earned' },
+      { subject: 'Casey', activity: 'quiz', unit: 'marks', action: 'received' },
+      { subject: 'Drew', activity: 'trial', unit: 'units', action: 'gained' },
+      { subject: 'Morgan', activity: 'round', unit: 'stars', action: 'collected' },
     ];
 
     const { subject, activity, unit, action } = scenarios[i];
@@ -133,11 +143,11 @@ export function createEvaluateExpression() {
       prompt: `${subject} scores ${pointsPerGame} ${unit} per ${activity} and ${action} ${bonus}-${unit} bonus this season. After ${numGames} ${activity}s, what is the total ${unit}?`,
       answer: result,
       validate: (value) => Number(value) === result,
-      khanLink: khanLinks[i],
+      khanLink: khanLinks[i % khanLinks.length],
     });
   }
 
-  return { ...variations[randomInt(0, 4)], topicLabel: 'an evaluating expressions problem' };
+  return { ...variations[randomInt(0, variations.length - 1)], topicLabel: 'an evaluating expressions problem' };
 }
 
 export function createWriteExpressionWordProblem() {
@@ -150,7 +160,7 @@ export function createWriteExpressionWordProblem() {
     'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-expressions-and-variables/cc-6th-alg-expression-word-problems/e/writing-expressions-with-variables-word-problems',
   ];
 
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < 10; i += 1) {
     const num = randomInt(2, 8);
     const value = randomInt(2, 10);
 
@@ -160,6 +170,11 @@ export function createWriteExpressionWordProblem() {
       `Write an expression: Each of ${num} students gets $${value}. Total amount distributed?`,
       `Write an expression: ${num} pizzas cost $${value} each. What's the total?`,
       `Write an expression: ${num} tickets at $${value} each. Total expense?`,
+      `Write an expression: ${num} chairs at $${value} each. How much will they cost together?`,
+      `Write an expression: ${num} boxes with $${value} worth of supplies each. Total value?`,
+      `Write an expression: ${num} bouquets at $${value} per bouquet. What is the full price?`,
+      `Write an expression: ${num} markers cost $${value} apiece. What's the total cost?`,
+      `Write an expression: ${num} plants cost $${value} each. How much to buy all of them?`,
     ];
 
     variations.push({
@@ -169,11 +184,11 @@ export function createWriteExpressionWordProblem() {
         const cleaned = input.replace(/\s+/g, '');
         return cleaned === `${num}*${value}` || cleaned === `${value}*${num}`;
       },
-      khanLink: khanLinks[i],
+      khanLink: khanLinks[i % khanLinks.length],
     });
   }
 
-  return { ...variations[randomInt(0, 4)], topicLabel: 'a writing expressions problem' };
+  return { ...variations[randomInt(0, variations.length - 1)], topicLabel: 'a writing expressions problem' };
 }
 
 export function createRatioProblemWordProblem() {
@@ -186,7 +201,7 @@ export function createRatioProblemWordProblem() {
     'https://www.khanacademy.org/math/cc-sixth-grade-math/cc-6th-ratios-prop-topic/cc-6th-equivalent-ratios/e/ratio_word_problems',
   ];
 
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < 10; i += 1) {
     const a = randomInt(2, 5);
     const b = randomInt(2, 7);
     const scale = randomInt(2, 5);
@@ -197,17 +212,22 @@ export function createRatioProblemWordProblem() {
       `In a class, the ratio of boys to girls is ${a}:${b}. If there are ${b * scale} girls, how many boys?`,
       `A map has a scale of ${a}:${b}. If a real distance is ${b * scale} miles, what is the map distance?`,
       `The ratio of cats to dogs in a shelter is ${a}:${b}. With ${b * scale} dogs, how many cats are there?`,
+      `The juice recipe uses ${a} parts water to ${b} parts concentrate. If you have ${b * scale} parts concentrate, how much water is needed?`,
+      `A model uses ${a}:${b} ratio for paint colors. If you mix ${b * scale} parts of the second color, how many parts of the first?`,
+      `A team has players in ratio ${a}:${b}. If the second group has ${b * scale} players, how many are in the first group?`,
+      `A classroom ratio of pens to pencils is ${a}:${b}. With ${b * scale} pencils, how many pens should there be?`,
+      `A box contains items in ${a}:${b} ratio. If there are ${b * scale} of the second type, how many of the first type exist?`,
     ];
 
     variations.push({
       prompt: prompts[i],
       answer: a * scale,
       validate: (value) => Number(value) === a * scale,
-      khanLink: khanLinks[i],
+      khanLink: khanLinks[i % khanLinks.length],
     });
   }
 
-  return { ...variations[randomInt(0, 4)], topicLabel: 'a ratio word problem' };
+  return { ...variations[randomInt(0, variations.length - 1)], topicLabel: 'a ratio word problem' };
 }
 
 // Decimal generators
@@ -221,7 +241,7 @@ export function createDecimalAdditionProblem() {
     'https://www.khanacademy.org/math/cc-fifth-grade-math/imp-addition-and-subtraction-3/imp-adding-decimals/e/adding-decimals-without-the-standard-algorithm-3',
   ];
 
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < 10; i += 1) {
     const a = randomInt(11, 89) / 10;
     const b = randomInt(11, 89) / 10;
     const answer = parseFloat((a + b).toFixed(1));
@@ -232,17 +252,22 @@ export function createDecimalAdditionProblem() {
       `One piece of wood is ${a} meters long and another is ${b} meters. What is the total length?`,
       `Carlos spent $${a} on lunch and $${b} on a snack. How much did he spend altogether?`,
       `A fish tank holds ${a} liters and a pitcher holds ${b} liters. How many liters of water is that in total?`,
+      `A toy ship is ${a} meters long and a model car is ${b} meters. What is their combined length?`,
+      `A plant grew ${a} cm in spring and ${b} cm in summer. How much did it grow total?`,
+      `Two pipes have flows of ${a} and ${b} liters per minute. What's the combined flow?`,
+      `A jogger ran ${a} km then another ${b} km later. How far in total?`,
+      `A container holds ${a} L of oil and another ${b} L. What's the total volume?`,
     ];
 
     variations.push({
       prompt: prompts[i],
       answer,
       validate: (value) => Math.abs(Number(value) - answer) < 0.001,
-      khanLink: khanLinks[i],
+      khanLink: khanLinks[i % khanLinks.length],
     });
   }
 
-  return { ...variations[randomInt(0, 4)], topicLabel: 'a decimal addition problem' };
+  return { ...variations[randomInt(0, variations.length - 1)], topicLabel: 'a decimal addition problem' };
 }
 
 export function createDecimalSubtractionProblem() {
@@ -255,7 +280,7 @@ export function createDecimalSubtractionProblem() {
     'https://www.khanacademy.org/math/cc-fifth-grade-math/subtract-decimals/imp-subtracting-decimals/e/subtracting-decimals-without-the-standard-algorithm-2',
   ];
 
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < 10; i += 1) {
     const b = randomInt(11, 59) / 10;
     const a = parseFloat((b + randomInt(11, 39) / 10).toFixed(1));
     const answer = parseFloat((a - b).toFixed(1));
@@ -266,17 +291,22 @@ export function createDecimalSubtractionProblem() {
       `The temperature dropped from ${a}°F to ${b}°F. By how many degrees did it fall?`,
       `A bottle had ${a} liters of juice. After pouring out ${b} liters, how much is left?`,
       `A bag of rice weighed ${a} kg. After using ${b} kg in a recipe, what is the remaining weight?`,
+      `A bookshelf was ${a} meters long. After removing ${b} meters of shelf, what's the remaining length?`,
+      `An athlete had ${a} points and lost ${b} points. How many remain?`,
+      `A parking lot had ${a} cars. After ${b} cars left, how many cars are left?`,
+      `A jug contained ${a} liters of milk. After pouring ${b} liters, how much milk is left?`,
+      `A project budget was $${a}. After spending $${b}, what's the remaining budget?`,
     ];
 
     variations.push({
       prompt: prompts[i],
       answer,
       validate: (value) => Math.abs(Number(value) - answer) < 0.001,
-      khanLink: khanLinks[i],
+      khanLink: khanLinks[i % khanLinks.length],
     });
   }
 
-  return { ...variations[randomInt(0, 4)], topicLabel: 'a decimal subtraction problem' };
+  return { ...variations[randomInt(0, variations.length - 1)], topicLabel: 'a decimal subtraction problem' };
 }
 
 export function createDecimalMultiplicationProblem() {
@@ -289,7 +319,7 @@ export function createDecimalMultiplicationProblem() {
     'https://www.khanacademy.org/math/cc-fifth-grade-math/imp-multiplication-and-division-3/multiplying-decimals-and-whole-numbers/v/strategies-for-multiplying-decimals-and-whole-numbers',
   ];
 
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < 10; i += 1) {
     const factor = randomInt(12, 45) / 10;
     const multiplier = randomInt(2, 8);
     const answer = parseFloat((factor * multiplier).toFixed(1));
@@ -300,17 +330,22 @@ export function createDecimalMultiplicationProblem() {
       `Jordan earns $${factor} per hour. How much does he earn working ${multiplier} hours?`,
       `Each bag of apples weighs ${factor} pounds. What is the total weight of ${multiplier} bags?`,
       `A single tile is ${factor} meters wide. How wide are ${multiplier} tiles placed side by side?`,
+      `A rope costs $${factor} per meter. What is the cost for ${multiplier} meters?`,
+      `A printer prints ${factor} pages per minute. How many pages in ${multiplier} minutes?`,
+      `A machine produces ${factor} units each hour. How many in ${multiplier} hours?`,
+      `A slice weighs ${factor} kg. What's the weight of ${multiplier} slices together?`,
+      `A bottle contains ${factor} liters. How many liters are in ${multiplier} bottles?`,
     ];
 
     variations.push({
       prompt: prompts[i],
       answer,
       validate: (value) => Math.abs(Number(value) - answer) < 0.01,
-      khanLink: khanLinks[i],
+      khanLink: khanLinks[i % khanLinks.length],
     });
   }
 
-  return { ...variations[randomInt(0, 4)], topicLabel: 'a decimal multiplication problem' };
+  return { ...variations[randomInt(0, variations.length - 1)], topicLabel: 'a decimal multiplication problem' };
 }
 
 export function createDecimalDivisionProblem() {
@@ -323,7 +358,7 @@ export function createDecimalDivisionProblem() {
     'https://www.khanacademy.org/math/cc-fifth-grade-math/divide-decimals/imp-dividing-decimals/v/visually-dividing-decimal-by-whole-number',
   ];
 
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < 10; i += 1) {
     const answer = randomInt(11, 39) / 10;
     const divisor = randomInt(2, 6);
     const dividend = parseFloat((answer * divisor).toFixed(1));
@@ -334,17 +369,22 @@ export function createDecimalDivisionProblem() {
       `A car used ${dividend} liters of gas over ${divisor} days. What was the average daily usage in liters?`,
       `${dividend} pounds of trail mix is divided equally into ${divisor} bags. How many pounds per bag?`,
       `A pipe ${dividend} meters long is cut into ${divisor} equal sections. How long is each section?`,
+      `${dividend} cookies are shared among ${divisor} children. How many cookies per child?`,
+      `A board ${dividend} m long is split into ${divisor} equal parts. What's the length of each part?`,
+      `A runner covered ${dividend} km in ${divisor} days. What was the average per day?`,
+      `A paint can holds ${dividend} L and is used over ${divisor} projects. How much paint per project?`,
+      `A loaf weighs ${dividend} kg and is cut into ${divisor} equal slices. How heavy is each slice?`,
     ];
 
     variations.push({
       prompt: prompts[i],
       answer,
       validate: (value) => Math.abs(Number(value) - answer) < 0.01,
-      khanLink: khanLinks[i],
+      khanLink: khanLinks[i % khanLinks.length],
     });
   }
 
-  return { ...variations[randomInt(0, 4)], topicLabel: 'a decimal division problem' };
+  return { ...variations[randomInt(0, variations.length - 1)], topicLabel: 'a decimal division problem' };
 }
 
 export function createFractionMultiplicationProblem() {
@@ -357,7 +397,7 @@ export function createFractionMultiplicationProblem() {
     'https://www.khanacademy.org/math/arithmetic/fraction-arithmetic/multiply-fractions/e/fraction-word-problems',
   ];
 
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < 10; i += 1) {
     const denominatorA = randomInt(2, 12);
     const denominatorB = randomInt(2, 12);
     const numeratorA = randomInt(1, denominatorA - 1);
@@ -372,17 +412,22 @@ export function createFractionMultiplicationProblem() {
       `A fabric piece is ${numeratorA}/${denominatorA} yards wide. If the seamstress cuts ${numeratorB}/${denominatorB} of that width, how many yards does she cut?`,
       `Sofia reads ${numeratorA}/${denominatorA} of a book each day and reads for ${numeratorB}/${denominatorB} of a week. What fraction of the book does she read?`,
       `A ribbon is ${numeratorA}/${denominatorA} meter long. You use ${numeratorB}/${denominatorB} of that ribbon. What fraction of a meter did you use?`,
+      `A baker uses ${numeratorA}/${denominatorA} of a bag of flour per batch and makes ${numeratorB}/${denominatorB} of a batch. How much flour is used?`,
+      `A picture frame uses ${numeratorA}/${denominatorA} of a yard of trim. If you use ${numeratorB}/${denominatorB} of that trim, how many yards is that?`,
+      `An athlete completed ${numeratorA}/${denominatorA} of a lap each interval and did ${numeratorB}/${denominatorB} of the training plan. What fraction of the lap did they complete?`,
+      `A sheet is ${numeratorA}/${denominatorA} meters long. Cutting ${numeratorB}/${denominatorB} of it yields how many meters?`,
+      `A student studies ${numeratorA}/${denominatorA} of the notes each day and studies ${numeratorB}/${denominatorB} of the week. What fraction of the notes are studied?`,
     ];
 
     variations.push({
       prompt: prompts[i],
       answer,
       validate: createFractionValidate(answerNumerator, answerDenominator),
-      khanLink: khanLinks[i],
+      khanLink: khanLinks[i % khanLinks.length],
     });
   }
 
-  return { ...variations[randomInt(0, 4)], topicLabel: 'a fraction multiplication problem' };
+  return { ...variations[randomInt(0, variations.length - 1)], topicLabel: 'a fraction multiplication problem' };
 }
 
 export function createFractionDivisionProblem() {
@@ -395,7 +440,7 @@ export function createFractionDivisionProblem() {
     'https://www.khanacademy.org/math/arithmetic/fraction-arithmetic/dividing-fractions/e/dividing-fractions-word-problems',
   ];
 
-  for (let i = 0; i < 5; i += 1) {
+  for (let i = 0; i < 10; i += 1) {
     const denominatorA = randomInt(2, 12);
     const denominatorB = randomInt(2, 12);
     const numeratorA = randomInt(1, denominatorA - 1);
@@ -408,18 +453,23 @@ export function createFractionDivisionProblem() {
     const prompts = [
       `A chef has ${numeratorA}/${denominatorA} of a liter of sauce and uses ${numeratorB}/${denominatorB} of it for one dish. How many dishes can they make?`,
       `A ribbon measures ${numeratorA}/${denominatorA} meter and is cut into pieces ${numeratorB}/${denominatorB} meter long. How many pieces are there?`,
-      `A student has ${numeratorA}/${denominatorA} of a pie and shares it equally among ${numeratorB}/${denominatorB} of the pie per friend. How many friends can get a piece?`,
+      `A student has ${numeratorA}/${denominatorA} of a pie. If each friend receives ${numeratorB}/${denominatorB} of a pie, how many friends can get a full piece?`,
       `A container holds ${numeratorA}/${denominatorA} gallon of paint. Each project uses ${numeratorB}/${denominatorB} gallon. How many projects can be painted?`,
       `A trail is ${numeratorA}/${denominatorA} mile long. Hikers walk ${numeratorB}/${denominatorB} mile each day. How many days until the trail is finished?`,
+      `A jar contains ${numeratorA}/${denominatorA} kg of nuts. Each snack uses ${numeratorB}/${denominatorB} kg. How many snacks can be served?`,
+      `A ribbon of ${numeratorA}/${denominatorA} m is cut into pieces of ${numeratorB}/${denominatorB} m. How many pieces result?`,
+      `You have ${numeratorA}/${denominatorA} of a loaf and cut slices of ${numeratorB}/${denominatorB} each. How many slices do you get?`,
+      `A recipe uses ${numeratorB}/${denominatorB} of a cup, and you have ${numeratorA}/${denominatorA} cups. How many servings can you make?`,
+      `A classroom has ${numeratorA}/${denominatorA} of a sheet of paper. Each worksheet uses ${numeratorB}/${denominatorB} of a sheet. How many worksheets can be produced?`,
     ];
 
     variations.push({
       prompt: prompts[i],
       answer,
       validate: createFractionValidate(answerNumerator, answerDenominator),
-      khanLink: khanLinks[i],
+      khanLink: khanLinks[i % khanLinks.length],
     });
   }
 
-  return { ...variations[randomInt(0, 4)], topicLabel: 'a fraction division problem' };
+  return { ...variations[randomInt(0, variations.length - 1)], topicLabel: 'a fraction division problem' };
 }

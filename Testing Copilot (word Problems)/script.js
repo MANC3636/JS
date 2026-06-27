@@ -11,10 +11,15 @@ const gameCanvas = document.getElementById('game-canvas');
 const gameTitle = document.getElementById('game-title');
 const timerLabel = document.getElementById('timer');
 const gameInstructions = document.getElementById('game-instructions');
+const snakeToggleBtn = document.getElementById('snake-toggle-btn');
 const successSound = document.getElementById('success-sound');
 const failureSound = document.getElementById('failure-sound');
 const hitSound = document.getElementById('hit-sound');
 const ctx = gameCanvas.getContext('2d');
+
+let snakeControlState = 'ready';
+let snakeCountdownRemaining = null;
+let snakeStartTimeoutId = null;
 
 // --- Admin & panel elements ---
 const registerPanel = document.getElementById('register-panel');
@@ -245,6 +250,7 @@ function stopGame() {
     clearInterval(countdownInterval);
     countdownInterval = null;
   }
+  clearSnakeStartDelay();
   window.removeEventListener('keydown', pongKeyDown);
   window.removeEventListener('keyup', pongKeyUp);
   window.removeEventListener('keydown', snakeKeyDown);
@@ -254,6 +260,13 @@ function stopGame() {
   window.removeEventListener('keydown', pacmanKeyDown);
   currentGame = null;
   gameEndTime = null;
+  snakeControlState = 'ready';
+  snakeCountdownRemaining = null;
+  if (snakeToggleBtn) {
+    snakeToggleBtn.textContent = 'Start';
+    snakeToggleBtn.classList.add('hidden');
+    snakeToggleBtn.disabled = false;
+  }
   gameScreen.classList.remove('flash-warning');
   showScreen(gradeScreen);
 }
@@ -276,30 +289,105 @@ function startCountdown(durationMs) {
   }, 250);
 }
 
+function pauseSnakeCountdown() {
+  if (!countdownInterval || !gameEndTime) return;
+  snakeCountdownRemaining = Math.max(0, gameEndTime - Date.now());
+  clearInterval(countdownInterval);
+  countdownInterval = null;
+  gameEndTime = null;
+}
+
+function clearSnakeStartDelay() {
+  if (snakeStartTimeoutId !== null) {
+    clearTimeout(snakeStartTimeoutId);
+    snakeStartTimeoutId = null;
+  }
+}
+
+function startSnakeGame() {
+  if (snakeControlState !== 'ready') return;
+  snakeControlState = 'starting';
+  snakeToggleBtn.textContent = 'Starting...';
+  snakeToggleBtn.disabled = true;
+  clearSnakeStartDelay();
+  snakeStartTimeoutId = setTimeout(() => {
+    snakeStartTimeoutId = null;
+    snakeControlState = 'running';
+    snakeToggleBtn.disabled = false;
+    snakeToggleBtn.textContent = 'Pause';
+    if (!countdownInterval) {
+      if (snakeCountdownRemaining == null) {
+        startCountdown(120000);
+      } else {
+        startCountdown(snakeCountdownRemaining);
+        snakeCountdownRemaining = null;
+      }
+    }
+    if (!animationId) {
+      lastTime = null;
+      animationId = requestAnimationFrame(runGameLoop);
+    }
+  }, 2000);
+}
+
+function pauseSnakeGame() {
+  if (snakeControlState !== 'running') return;
+  snakeControlState = 'paused';
+  snakeToggleBtn.textContent = 'Stop';
+  if (animationId) {
+    cancelAnimationFrame(animationId);
+    animationId = null;
+  }
+  pauseSnakeCountdown();
+}
+
+function stopSnakeGame() {
+  snakeControlState = 'ready';
+  snakeCountdownRemaining = null;
+  snakeToggleBtn.disabled = false;
+  snakeToggleBtn.textContent = 'Start';
+  clearSnakeStartDelay();
+  stopGame();
+}
+
 function activateGame(gameName) {
   currentGame = gameName;
   lastTime = null;
   showScreen(gameScreen);
-  startCountdown(120000);
   if (gameName === 'pong') {
     gameTitle.textContent = 'Pong';
     gameInstructions.textContent = 'Use W/S to move left paddle and Up/Down arrows to move right paddle.';
+    snakeToggleBtn.classList.add('hidden');
+    startCountdown(120000);
     initPong();
   } else if (gameName === 'snake') {
     gameTitle.textContent = 'Snake';
     gameInstructions.textContent = 'Use arrow keys to move the snake. Eat food and avoid walls.';
+    snakeControlState = 'ready';
+    snakeCountdownRemaining = null;
+    timerLabel.textContent = formatTime(120000);
+    gameEndTime = null;
+    countdownInterval = null;
+    snakeToggleBtn.textContent = 'Start';
+    snakeToggleBtn.classList.remove('hidden');
     initSnake();
   } else if (gameName === 'space-invader') {
     gameTitle.textContent = 'Space Invader';
     gameInstructions.textContent = 'Use Left/Right to move and Space to shoot the invader.';
+    snakeToggleBtn.classList.add('hidden');
+    startCountdown(120000);
     initSpaceInvader();
   } else if (gameName === 'flappy-bird') {
     gameTitle.textContent = 'Flappy Bird';
     gameInstructions.textContent = 'Press Space or ArrowUp to flap and avoid the pipes.';
+    snakeToggleBtn.classList.add('hidden');
+    startCountdown(120000);
     initFlappyBird();
   } else if (gameName === 'pacman') {
     gameTitle.textContent = 'Pacman';
     gameInstructions.textContent = 'Use arrow keys to move Pacman, eat all dots, and avoid the chasing enemies.';
+    snakeToggleBtn.classList.add('hidden');
+    startCountdown(120000);
     initPacman();
   }
 }
@@ -320,6 +408,16 @@ gameButtons.forEach((button) => {
   button.addEventListener('click', () => {
     activateGame(button.dataset.game);
   });
+});
+
+snakeToggleBtn && snakeToggleBtn.addEventListener('click', () => {
+  if (snakeControlState === 'ready') {
+    startSnakeGame();
+  } else if (snakeControlState === 'running') {
+    pauseSnakeGame();
+  } else if (snakeControlState === 'paused') {
+    stopSnakeGame();
+  }
 });
 
 gradeButtons.forEach((button) => {
@@ -517,7 +615,8 @@ function initSnake() {
   snakeState.frameCounter = 0;
   snakeState.alive = true;
   window.addEventListener('keydown', snakeKeyDown);
-  animationId = requestAnimationFrame(runGameLoop);
+  animationId = null;
+  drawSnake();
 }
 
 function snakeKeyDown(event) {
