@@ -7,6 +7,7 @@ import {
   createDecimalDivisionProblem,
   createOneStepEquationWordProblem,
 } from './quiz_impl.js';
+import { getFlashMode } from './export.js';
 
 function runTest(name, gen, iterations = 50) {
   const errors = [];
@@ -35,4 +36,16 @@ function runTest(name, gen, iterations = 50) {
   runTest('decimal mul', createDecimalMultiplicationProblem);
   runTest('decimal div', createDecimalDivisionProblem);
   runTest('one-step eq', createOneStepEquationWordProblem);
+
+  const epilepsyStudent = { hasEpilepsy: true };
+  const normalStudent = { hasEpilepsy: false };
+  const flashModeDisabled = getFlashMode(epilepsyStudent, 'flash');
+  const flashModeEnabled = getFlashMode(normalStudent, 'flash');
+  const solidMode = getFlashMode(normalStudent, 'solid');
+  const failures = [];
+  if (flashModeDisabled !== 'solid') failures.push(`epilepsy student should use solid mode, got ${flashModeDisabled}`);
+  if (flashModeEnabled !== 'flash') failures.push(`non-epilepsy student should allow flash mode, got ${flashModeEnabled}`);
+  if (solidMode !== 'solid') failures.push(`solid preference should stay solid, got ${solidMode}`);
+  console.log(`Flash mode tests: ${failures.length} failures`);
+  if (failures.length) console.log(failures.join('\n'));
 })();

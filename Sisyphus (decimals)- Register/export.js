@@ -30,6 +30,17 @@ export function buildCsvRow(row) {
   return row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(',');
 }
 
+export function getFlashMode(student, preference = null) {
+  if (student?.hasEpilepsy) return 'solid';
+
+  const storedPreference = preference
+    || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('sisyphusFlash') : null)
+    || (typeof localStorage !== 'undefined' ? localStorage.getItem('sisyphusFlash') : null)
+    || 'flash';
+
+  return storedPreference === 'solid' ? 'solid' : 'flash';
+}
+
 export function createStudentsCsvBlob(students) {
   const header = ['First Name', 'Last Name', 'Grade', 'Email'];
   const rows = [header, ...students.map((student) => [student.firstName, student.lastName, student.grade, student.email])];
@@ -101,6 +112,6 @@ export function getWeeklyReportSchedulerDesign() {
 }
 
 export default {
-  getStoredStudents, saveStoredStudents, getUsageLog, saveUsageLog, getWeekLabel, buildCsvRow,
+  getStoredStudents, saveStoredStudents, getUsageLog, saveUsageLog, getWeekLabel, buildCsvRow, getFlashMode,
   createStudentsCsvBlob, createUsageCsvBlob, createUsageReportCsvBlob, getWeeklyReportSchedulerDesign,
 };

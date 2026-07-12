@@ -1,7 +1,8 @@
 // game.js — Pong game controller. Inject DOM elements and sound functions.
 import { sndWallHit, sndPlayerHit, sndAiHit, sndGameOver } from './sound.js';
+import { getFlashMode } from './export.js';
 
-export function createGameController({ canvas, scoreDisplay, timerDisplay, onEnd } = {}) {
+export function createGameController({ canvas, scoreDisplay, timerDisplay, onEnd, getFlashPreference = null } = {}) {
   const ctx = canvas.getContext('2d');
   let gameActive = false;
   let currentScore = 0;
@@ -76,6 +77,14 @@ export function createGameController({ canvas, scoreDisplay, timerDisplay, onEnd
     ctx.fill();
   }
 
+  function resolveFlashMode() {
+    if (typeof getFlashPreference === 'function') {
+      const pref = getFlashPreference();
+      if (pref === 'solid' || pref === 'flash') return pref;
+    }
+    return getFlashMode(null, (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('sisyphusFlash') : null) || (typeof localStorage !== 'undefined' ? localStorage.getItem('sisyphusFlash') : null) || 'flash');
+  }
+
   function drawGame() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
@@ -90,31 +99,26 @@ export function createGameController({ canvas, scoreDisplay, timerDisplay, onEnd
     ctx.stroke();
     ctx.setLineDash([]);
 
+    const flashMode = resolveFlashMode();
     if (remainingSeconds <= 15) {
-      const flashPref = sessionStorage.getItem('sisyphusFlash') || localStorage.getItem('sisyphusFlash') || 'flash';
-      if (flashPref === 'solid') {
+      if (flashMode === 'solid') {
         ctx.strokeStyle = 'rgba(255, 68, 68, 0.85)';
         ctx.lineWidth = 8;
         ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
-      } else {
-        if (Math.floor(Date.now() / 250) % 2 === 0) {
-          ctx.strokeStyle = 'rgba(255, 68, 68, 0.85)';
-          ctx.lineWidth = 8;
-          ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
-        }
+      } else if (Math.floor(Date.now() / 250) % 2 === 0) {
+        ctx.strokeStyle = 'rgba(255, 68, 68, 0.85)';
+        ctx.lineWidth = 8;
+        ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
       }
     } else if (remainingSeconds <= 30) {
-      const flashPref = sessionStorage.getItem('sisyphusFlash') || localStorage.getItem('sisyphusFlash') || 'flash';
-      if (flashPref === 'solid') {
+      if (flashMode === 'solid') {
         ctx.strokeStyle = 'rgba(255, 215, 0, 0.75)';
         ctx.lineWidth = 8;
         ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
-      } else {
-        if (Math.floor(Date.now() / 500) % 2 === 0) {
-          ctx.strokeStyle = 'rgba(255, 215, 0, 0.75)';
-          ctx.lineWidth = 8;
-          ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
-        }
+      } else if (Math.floor(Date.now() / 500) % 2 === 0) {
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.75)';
+        ctx.lineWidth = 8;
+        ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
       }
     }
 
@@ -191,6 +195,23 @@ export function createGameController({ canvas, scoreDisplay, timerDisplay, onEnd
     if (timerDisplay) timerDisplay.classList.remove('timer-warning', 'timer-danger');
   }
 
+  function updateTimerWarning() {
+    if (!timerDisplay) return;
+    if (resolveFlashMode() === 'flash') {
+      if (remainingSeconds <= 15) {
+        timerDisplay.classList.remove('timer-warning');
+        timerDisplay.classList.add('timer-danger');
+      } else if (remainingSeconds <= 30) {
+        timerDisplay.classList.remove('timer-danger');
+        timerDisplay.classList.add('timer-warning');
+      } else {
+        clearTimerWarning();
+      }
+    } else {
+      clearTimerWarning();
+    }
+  }
+
   function endGame() {
     gameActive = false;
     cancelAnimationFrame(animationFrameId);
@@ -217,14 +238,7 @@ export function createGameController({ canvas, scoreDisplay, timerDisplay, onEnd
     gameTimer = setInterval(() => {
       remainingSeconds -= 1;
       if (timerDisplay) timerDisplay.textContent = formatTimer(remainingSeconds);
-      if (remainingSeconds <= 15) {
-        if (timerDisplay) {
-          timerDisplay.classList.remove('timer-warning');
-          timerDisplay.classList.add('timer-danger');
-        }
-      } else if (remainingSeconds <= 30) {
-        if (timerDisplay) timerDisplay.classList.add('timer-warning');
-      }
+      updateTimerWarning();
       if (remainingSeconds <= 0) {
         endGame();
       }

@@ -55,6 +55,7 @@ const levelUpBtn = document.getElementById('level-up-btn');
 const flashWarning = document.getElementById('flash-warning');
 const solidLightsBtn = document.getElementById('solid-lights-btn');
 const allowFlashBtn = document.getElementById('allow-flash-btn');
+const epilepsyQuestion = document.getElementById('epilepsy-question');
 
 // State
 let activeStudent = null;
@@ -72,7 +73,7 @@ const gameCtrl = createGameController({ canvas, scoreDisplay, timerDisplay, onEn
   showFeedback('Time is up! A new quiz is ready. Try the next round.', false);
   questions = generateQuestions();
   renderQuestions(questions);
-} });
+}, getFlashPreference: () => ex.getFlashMode(activeStudent, sessionStorage.getItem('sisyphusFlash') || localStorage.getItem('sisyphusFlash') || null) });
 
 function showAuthFeedback(element, message, isSuccess = false) {
   element.textContent = message;
@@ -409,6 +410,7 @@ registerForm.addEventListener('submit', (event) => {
   const lastName = document.getElementById('last-name').value.trim();
   const grade = document.getElementById('grade').value.trim();
   const email = auth.normalizeEmail(document.getElementById('register-email').value);
+  const hasEpilepsy = epilepsyQuestion?.value === 'yes';
 
   if (!firstName || !lastName || !grade || !email) {
     showAuthFeedback(registerFeedback, 'All fields are required to register.', false);
@@ -421,7 +423,7 @@ registerForm.addEventListener('submit', (event) => {
     return;
   }
 
-  const newStudent = { firstName, lastName, grade, email };
+  const newStudent = { firstName, lastName, grade, email, hasEpilepsy };
   students.push(newStudent);
   ex.saveStoredStudents(students);
   showAuthFeedback(registerFeedback, 'Registration complete. You are now signed in.', true);
@@ -497,10 +499,14 @@ if (levelUpBtn) {
 
 // Flash warning buttons
 function getFlashPref() {
-  return sessionStorage.getItem('sisyphusFlash') || localStorage.getItem('sisyphusFlash') || null;
+  return ex.getFlashMode(activeStudent, sessionStorage.getItem('sisyphusFlash') || localStorage.getItem('sisyphusFlash') || null);
 }
 
 function setFlashPref(value) {
+  if (activeStudent?.hasEpilepsy) {
+    if (flashWarning) flashWarning.classList.add('hidden');
+    return;
+  }
   // persist to localStorage so preference survives reloads; sessionStorage also accepted
   localStorage.setItem('sisyphusFlash', value);
   try { sessionStorage.setItem('sisyphusFlash', value); } catch (e) { /* ignore */ }
