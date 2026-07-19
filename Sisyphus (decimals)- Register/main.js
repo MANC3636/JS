@@ -1,6 +1,8 @@
 import * as sound from './sound.js';
 import * as ex from './export.js';
 import * as auth from './auth.js';
+import * as referrals from './referrals.js';
+import { db } from './firebase.js';
 import quiz from './quiz.js';
 import { createGameController } from './game.js';
 
@@ -56,6 +58,14 @@ const flashWarning = document.getElementById('flash-warning');
 const solidLightsBtn = document.getElementById('solid-lights-btn');
 const allowFlashBtn = document.getElementById('allow-flash-btn');
 const epilepsyQuestion = document.getElementById('epilepsy-question');
+const referralLinkInput = document.getElementById('referral-link-input');
+const copyReferralLinkBtn = document.getElementById('copy-referral-link-btn');
+const bonusReadyBadge = document.getElementById('bonus-ready-badge');
+const referralInfoBtn = document.getElementById('referral-info-btn');
+const referralInfoModal = document.getElementById('referral-info-modal');
+const referralInfoCloseBtn = document.getElementById('referral-info-close-btn');
+const referralWelcomeBanner = document.getElementById('referral-welcome-banner');
+const referralCodeInput = document.getElementById('referral-code-input');
 
 // State
 let activeStudent = null;
@@ -73,7 +83,14 @@ const gameCtrl = createGameController({ canvas, scoreDisplay, timerDisplay, onEn
   showFeedback('Time is up! A new quiz is ready. Try the next round.', false);
   questions = generateQuestions();
   renderQuestions(questions);
-}, getFlashPreference: () => ex.getFlashMode(activeStudent, sessionStorage.getItem('sisyphusFlash') || localStorage.getItem('sisyphusFlash') || null) });
+}, getFlashPreference: () => ex.getFlashMode(activeStudent, sessionStorage.getItem('sisyphusFlash') || localStorage.getItem('sisyphusFlash') || null),
+  getBonusMinutes: () => (activeStudent?.pendingBonusMinutes || 0),
+  onBonusConsumed: async () => {
+    if (!activeStudent) return;
+    activeStudent.pendingBonusMinutes = 0;
+    updateReferralUi();
+    try { await referrals.clearPendingBonus(db, activeStudent.id); } catch (e) { /* best-effort */ }
+  } });
 
 function showAuthFeedback(element, message, isSuccess = false) {
   element.textContent = message;
@@ -212,9 +229,9 @@ function renderReportTable(rows) {
   });
 }
 
-function updateReportView() {
+async function updateReportView() {
   if (!reportSection || reportSection.classList.contains('hidden')) return;
-  const logs = ex.getUsageLog();
+  const logs = await ex.getUsageLog();
   const filters = {
     timeframe: reportTimeframe?.value || 'week',
     query: reportSearch?.value || '',
@@ -226,8 +243,8 @@ function updateReportView() {
   renderReportTable(aggregatedRows);
 }
 
-function downloadFilteredReport() {
-  const logs = ex.getUsageLog();
+async function downloadFilteredReport() {
+  const logs = await ex.getUsageLog();
   const filters = {
     timeframe: reportTimeframe?.value || 'week',
     query: reportSearch?.value || '',
@@ -249,8 +266,15 @@ function downloadFilteredReport() {
   showAuthFeedback(registerFeedback, 'Filtered usage report downloaded as CSV.', true);
 }
 
-function setActiveStudent(student, { restoreTimestamp = false, rememberMe = false } = {}) {
+function updateReferralUi() {
+  if (!activeStudent || !referralLinkInput) return;
+  referralLinkInput.value = referrals.buildReferralLink(activeStudent.id);
+  if (bonusReadyBadge) bonusReadyBadge.classList.toggle('hidden', !(activeStudent.pendingBonusMinutes > 0));
+}
+
+async function setActiveStudent(student, { restoreTimestamp = false, rememberMe = false } = {}) {
   activeStudent = student;
+  if (referralWelcomeBanner) referralWelcomeBanner.classList.add('hidden');
   studentNameDisplay.textContent = `${student.firstName} ${student.lastName}`;
   studentGradeDisplay.textContent = `| Grade ${student.grade}`;
   sessionBanner.classList.remove('hidden');
@@ -278,6 +302,17 @@ function setActiveStudent(student, { restoreTimestamp = false, rememberMe = fals
   topicPicker.classList.remove('hidden');
   auth.logStudentUsage(student, 'sign-in', sessionStartTimestamp);
   updateRestrictedAccess(student);
+
+  // Referral session bookkeeping: reuse an in-progress session id across reloads;
+  // a missing one means this is a genuinely new sign-in session.
+  let referralSessionId = sessionStorage.getItem('sisyphusReferralSessionId');
+  if (!referralSessionId) {
+    referralSessionId = referrals.generateSessionId();
+    sessionStorage.setItem('sisyphusReferralSessionId', referralSessionId);
+    try { await referrals.recordNewSessionIfNeeded(db, student.id, referralSessionId); } catch (e) { /* best-effort */ }
+  }
+  referrals.startHeartbeat(db, student, referralSessionId);
+  updateReferralUi();
 
   if (sessionTimer) clearInterval(sessionTimer);
   updateSessionTimer();
@@ -309,23 +344,26 @@ function clearActiveStudent() {
   studentGradeDisplay.textContent = '';
   sessionStorage.removeItem('sisyphusActiveEmail');
   sessionStorage.removeItem('sisyphusSessionStart');
+  sessionStorage.removeItem('sisyphusReferralSessionId');
   localStorage.removeItem('sisyphusRememberedEmail');
+  referrals.stopHeartbeat();
+  if (referralLinkInput) referralLinkInput.value = '';
+  if (bonusReadyBadge) bonusReadyBadge.classList.add('hidden');
   if (sessionTimer) { clearInterval(sessionTimer); sessionTimer = null; }
 }
 
-function tryAutoSignIn() {
+async function tryAutoSignIn() {
   const activeEmail = sessionStorage.getItem('sisyphusActiveEmail');
   const rememberedEmail = localStorage.getItem('sisyphusRememberedEmail');
   const storedStart = sessionStorage.getItem('sisyphusSessionStart');
   const emailToUse = activeEmail || rememberedEmail;
   if (!emailToUse) return;
 
-  const students = ex.getStoredStudents();
-  const student = students.find((item) => auth.normalizeEmail(item.email) === emailToUse);
+  const student = await auth.findStudentByEmail(emailToUse);
   if (!student) return;
 
   const restoreTimestamp = Boolean(storedStart);
-  setActiveStudent(student, { restoreTimestamp, rememberMe: Boolean(rememberedEmail) });
+  await setActiveStudent(student, { restoreTimestamp, rememberMe: Boolean(rememberedEmail) });
 }
 
 // Quiz rendering and generation
@@ -401,7 +439,7 @@ quizForm.addEventListener('submit', (event) => {
   }
 });
 
-registerForm.addEventListener('submit', (event) => {
+registerForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   registerFeedback.classList.add('hidden');
   signInFeedback.classList.add('hidden');
@@ -417,20 +455,27 @@ registerForm.addEventListener('submit', (event) => {
     return;
   }
 
-  const students = ex.getStoredStudents();
-  if (students.some((item) => auth.normalizeEmail(item.email) === email)) {
+  const existing = await auth.findStudentByEmail(email);
+  if (existing) {
     showAuthFeedback(registerFeedback, 'This email is already registered. Please sign in instead.', false);
     return;
   }
 
-  const newStudent = { firstName, lastName, grade, email, hasEpilepsy };
-  students.push(newStudent);
-  ex.saveStoredStudents(students);
+  // Prefer an explicitly-typed referral code/link over the silently auto-captured
+  // one — but always consume the pending value so it can't linger and get
+  // attached to some later, unrelated registration attempt.
+  const capturedRef = referrals.consumePendingReferral();
+  const manualCode = referralCodeInput?.value.trim();
+  const referredBy = manualCode ? referrals.extractReferralCode(manualCode) : capturedRef;
+
+  const newStudent = await auth.registerStudent({
+    firstName, lastName, grade, email, hasEpilepsy, referredBy,
+  });
   showAuthFeedback(registerFeedback, 'Registration complete. You are now signed in.', true);
-  setActiveStudent(newStudent, { rememberMe: document.getElementById('remember-me-register').checked });
+  await setActiveStudent(newStudent, { rememberMe: document.getElementById('remember-me-register').checked });
 });
 
-signInForm.addEventListener('submit', (event) => {
+signInForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   signInFeedback.classList.add('hidden');
   registerFeedback.classList.add('hidden');
@@ -443,8 +488,7 @@ signInForm.addEventListener('submit', (event) => {
     return;
   }
 
-  const students = ex.getStoredStudents();
-  const student = students.find((item) => auth.normalizeEmail(item.email) === email);
+  const student = await auth.findStudentByEmail(email);
   if (!student) {
     showAuthFeedback(signInFeedback, 'No registered student found for that email.', false);
     return;
@@ -456,7 +500,7 @@ signInForm.addEventListener('submit', (event) => {
   }
 
   showAuthFeedback(signInFeedback, 'Sign in successful. Welcome back!', true);
-  setActiveStudent(student, { restoreTimestamp: true, rememberMe: document.getElementById('remember-me-signin').checked });
+  await setActiveStudent(student, { restoreTimestamp: true, rememberMe: document.getElementById('remember-me-signin').checked });
 });
 
 topicAlgebraBtn.addEventListener('click', () => startTopic('algebra'));
@@ -531,8 +575,8 @@ if (allowFlashBtn) {
 registerTab.addEventListener('click', () => { registerTab.classList.add('active'); signInTab.classList.remove('active'); registerForm.classList.remove('hidden'); signInForm.classList.add('hidden'); });
 signInTab.addEventListener('click', () => { registerTab.classList.remove('active'); signInTab.classList.add('active'); registerForm.classList.add('hidden'); signInForm.classList.remove('hidden'); });
 
-exportDataBtn.addEventListener('click', () => {
-  const students = ex.getStoredStudents();
+exportDataBtn.addEventListener('click', async () => {
+  const students = await ex.getStoredStudents();
   if (students.length === 0) { showAuthFeedback(registerFeedback, 'No registered students are available to export.', false); return; }
   const blob = ex.createStudentsCsvBlob(students);
   const url = URL.createObjectURL(blob);
@@ -540,8 +584,8 @@ exportDataBtn.addEventListener('click', () => {
   showAuthFeedback(registerFeedback, 'Student registry exported as CSV. You can send it to ttyson@blackstudentfund.org from your email client.', true);
 });
 
-exportUsageBtn.addEventListener('click', () => {
-  const logs = ex.getUsageLog();
+exportUsageBtn.addEventListener('click', async () => {
+  const logs = await ex.getUsageLog();
   if (logs.length === 0) { showAuthFeedback(registerFeedback, 'No usage history is available to export yet.', false); return; }
   const blob = ex.createUsageCsvBlob(logs);
   const url = URL.createObjectURL(blob);
@@ -550,10 +594,10 @@ exportUsageBtn.addEventListener('click', () => {
 });
 
 if (showReportBtn) {
-  showReportBtn.addEventListener('click', () => {
+  showReportBtn.addEventListener('click', async () => {
     if (reportSection) {
       reportSection.classList.toggle('hidden');
-      if (!reportSection.classList.contains('hidden')) updateReportView();
+      if (!reportSection.classList.contains('hidden')) await updateReportView();
     }
   });
 }
@@ -575,6 +619,31 @@ if (reportDownloadBtn) {
 takeQuizBtn.addEventListener('click', () => { auth.logStudentUsage(activeStudent, 'quiz-start', sessionStartTimestamp); quizSection.classList.remove('hidden'); quizSection.scrollIntoView({ behavior: 'smooth' }); });
 
 signOutBtn.addEventListener('click', () => { clearActiveStudent(); showFeedback('You have been signed out. Register or sign in to continue.', false); });
+
+if (copyReferralLinkBtn) {
+  copyReferralLinkBtn.addEventListener('click', async () => {
+    if (!referralLinkInput || !referralLinkInput.value) return;
+    try {
+      await navigator.clipboard.writeText(referralLinkInput.value);
+      showFeedback('Referral link copied!', true);
+    } catch (e) {
+      showAuthFeedback(registerFeedback, 'Could not copy the link automatically — copy it manually.', false);
+    }
+  });
+}
+
+if (referralInfoBtn && referralInfoModal) {
+  referralInfoBtn.addEventListener('click', () => referralInfoModal.classList.remove('hidden'));
+}
+if (referralInfoCloseBtn && referralInfoModal) {
+  referralInfoCloseBtn.addEventListener('click', () => referralInfoModal.classList.add('hidden'));
+}
+if (referralInfoModal) {
+  // Click on the dimmed backdrop (not the card itself) also closes it.
+  referralInfoModal.addEventListener('click', (event) => {
+    if (event.target === referralInfoModal) referralInfoModal.classList.add('hidden');
+  });
+}
 
 resetBtn.addEventListener('click', () => { questions = generateQuestions(); renderQuestions(questions); showFeedback('A fresh set of questions is ready. Give it your best!', false); });
 
@@ -600,8 +669,10 @@ canvas.addEventListener('touchmove', (e) => { gameCtrl.setPaddlePosition(e.touch
   const saved = localStorage.getItem('sisyphusTheme'); applyTheme(saved === 'feminine' ? 'feminine' : 'default');
 })();
 
-window.addEventListener('load', () => {
-  tryAutoSignIn();
+window.addEventListener('load', async () => {
+  const capturedRef = referrals.capturePendingReferralFromUrl();
+  if (capturedRef && referralWelcomeBanner) referralWelcomeBanner.classList.remove('hidden');
+  await tryAutoSignIn();
   if (!activeStudent) showFeedback('Register or sign in to begin.', false);
   else showFeedback('Pick a topic above to start your quiz!', false);
 });

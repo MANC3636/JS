@@ -1,0 +1,102 @@
+// csv_utils.js — pure helpers with zero imports (no Firestore, no DOM).
+// Kept separate from export.js so smoke_test.mjs (plain Node, no bundler) can
+// import these without pulling in export.js's Firestore CDN imports, which
+// Node can't resolve without special flags.
+export function getWeekLabel(date) {
+  const copy = new Date(date);
+  const day = copy.getDay();
+  const diff = (day + 6) % 7;
+  copy.setDate(copy.getDate() - diff);
+  copy.setHours(0, 0, 0, 0);
+  return copy.toISOString().slice(0, 10);
+}
+
+export function buildCsvRow(row) {
+  return row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(',');
+}
+
+export function getFlashMode(student, preference = null) {
+  if (student?.hasEpilepsy) return 'solid';
+
+  const storedPreference = preference
+    || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('sisyphusFlash') : null)
+    || (typeof localStorage !== 'undefined' ? localStorage.getItem('sisyphusFlash') : null)
+    || 'flash';
+
+  return storedPreference === 'solid' ? 'solid' : 'flash';
+}
+
+export function createStudentsCsvBlob(students) {
+  const header = ['First Name', 'Last Name', 'Grade', 'Email'];
+  const rows = [header, ...students.map((student) => [student.firstName, student.lastName, student.grade, student.email])];
+  const csvContent = rows.map(buildCsvRow).join('\r\n');
+  return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+}
+
+export function createUsageCsvBlob(logs) {
+  const header = ['Timestamp', 'Day', 'Week Of', 'Month', 'Usage Minutes', 'First Name', 'Last Name', 'Grade', 'Email', 'Action'];
+  const rows = [header, ...logs.map((entry) => [
+    entry.timestamp || '',
+    entry.dayOf || '',
+    entry.weekOf || '',
+    entry.monthOf || '',
+    entry.usageMinutes,
+    entry.firstName,
+    entry.lastName,
+    entry.grade,
+    entry.email,
+    entry.action,
+  ])];
+  const csvContent = rows.map(buildCsvRow).join('\r\n');
+  return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+}
+
+export function createUsageReportCsvBlob(rows) {
+  const header = ['Timestamp', 'Day', 'Week Of', 'Month', 'Usage Minutes', 'First Name', 'Last Name', 'Grade', 'Email', 'Action'];
+  const csvRows = [header, ...rows.map((entry) => [
+    entry.timestamp || '',
+    entry.dayOf || '',
+    entry.weekOf || '',
+    entry.monthOf || '',
+    entry.usageMinutes,
+    entry.firstName,
+    entry.lastName,
+    entry.grade,
+    entry.email,
+    entry.action,
+  ])];
+  const csvContent = csvRows.map(buildCsvRow).join('\r\n');
+  return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+}
+
+export function getWeeklyReportSchedulerDesign() {
+  return {
+    name: 'Weekly Student Registry Report',
+    schedule: {
+      frequency: 'weekly',
+      dayOfWeek: 'Monday',
+      time: '09:00',
+      timezone: 'local',
+    },
+    export: {
+      format: 'csv',
+      filename: 'student_registry.csv',
+      fields: ['First Name', 'Last Name', 'Grade', 'Email'],
+    },
+    delivery: {
+      method: 'email',
+      recipient: 'ttyson@blackstudentfund.org',
+      subject: 'Weekly Student Registry Report',
+    },
+    notes: [
+      'Requires a backend or server-side scheduler.',
+      'The scheduler should read the stored student registry, generate the CSV, and email it weekly.',
+      'If email delivery is not available, the scheduler can upload the report to secure cloud storage and notify the recipient.',
+    ],
+  };
+}
+
+export default {
+  getWeekLabel, buildCsvRow, getFlashMode,
+  createStudentsCsvBlob, createUsageCsvBlob, createUsageReportCsvBlob, getWeeklyReportSchedulerDesign,
+};

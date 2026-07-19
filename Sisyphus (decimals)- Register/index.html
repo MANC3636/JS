@@ -11,7 +11,7 @@
     <header class="hero">
       <div>
         <p class="level-label">Sixth Grade Math Fun</p>
-        <h1>Sisyphus: Math with a slice of Pong</h1>
+        <h1>Sisyphus: BSF Math with a slice of Pong</h1>
         <p>Answer 4 math questions to earn 2 minutes of pong time.</p>
       </div>
       <div class="hero-actions">
@@ -27,11 +27,26 @@
           <p>Register or sign in so the app can verify your student account and track your session time.</p>
         </div>
 
+        <div id="referral-welcome-banner" class="feedback referral-welcome hidden">🎉 You were referred by a friend! Register below to get started.</div>
+
         <div class="session-banner hidden" id="session-banner">
           <p>Signed in as <strong id="student-name"></strong> <span id="student-grade"></span></p>
           <p id="session-duration">Session time: 0:00</p>
+          <div id="referral-panel">
+            <p>Your referral link: <input id="referral-link-input" readonly /> <button id="copy-referral-link-btn" type="button" class="secondary-btn">Copy</button></p>
+            <button id="referral-info-btn" type="button" class="link-btn">ℹ️ How do you get bonus play time?</button>
+            <p id="bonus-ready-badge" class="hidden">🎁 Bonus ready — your next Pong round gets +5 minutes!</p>
+          </div>
           <div class="session-controls">
             <button id="theme-toggle" class="secondary-btn" type="button" aria-pressed="false">Purple Theme</button>
+          </div>
+        </div>
+
+        <div id="referral-info-modal" class="modal-overlay hidden">
+          <div class="modal-card">
+            <h3>Refer a friend, earn bonus time! 🎮</h3>
+            <p>Share your referral link with a friend. When they register using your link and play for at least <strong>30 minutes across two visits</strong>, you'll get <strong>5 bonus minutes</strong> added to your next Pong round!</p>
+            <button id="referral-info-close-btn" type="button" class="primary-btn">Got it!</button>
           </div>
         </div>
 
@@ -85,6 +100,10 @@
           <div class="form-row">
             <label for="register-email">Email</label>
             <input id="register-email" name="email" type="email" autocomplete="email" required />
+          </div>
+          <div class="form-row">
+            <label for="referral-code-input">Have a referral code? (optional)</label>
+            <input id="referral-code-input" name="referralCode" autocomplete="off" placeholder="Paste your friend's referral link or code" />
           </div>
           <div class="form-row remember-row">
             <label>

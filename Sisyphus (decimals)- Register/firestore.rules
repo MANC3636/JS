@@ -1,0 +1,109 @@
+// firestore.rules — draft security rules for the referral incentives program.
+//
+// There is no Firebase Authentication in this app (registration/sign-in is
+// still just email + last name, matching the existing lightweight model) —
+// so these rules constrain document SHAPE and value deltas, not WHO is
+// writing. See the "Residual risks" section of the referral plan for the
+// accepted tradeoffs this implies.
+//
+// Deploy via the Firebase Console (Firestore Database -> Rules) or the
+// Firebase CLI (`firebase deploy --only firestore:rules`). Validate against
+// the Rules Playground or local emulator before deploying — this is a first
+// draft, not battle-tested.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /students/{studentId} {
+      allow read: if true;
+
+      allow create: if request.resource.data.keys().hasAll(
+          ['firstName', 'lastName', 'grade', 'email', 'hasEpilepsy', 'referredBy',
+           'referralCredited', 'cumulativeUsageMinutes', 'distinctSessionCount',
+           'lastSessionId', 'pendingBonusMinutes', 'totalReferralBonusesEarned',
+           'creditedReferralIds', 'createdAt'])
+        && request.resource.data.referralCredited == false
+        && request.resource.data.cumulativeUsageMinutes == 0
+        && request.resource.data.distinctSessionCount == 0
+        && request.resource.data.pendingBonusMinutes == 0
+        && request.resource.data.totalReferralBonusesEarned == 0
+        && request.resource.data.creditedReferralIds.size() == 0
+        && (request.resource.data.referredBy == null
+            || request.resource.data.referredBy != studentId);
+
+      allow update: if isHeartbeatUpdate()
+        || isNewSessionUpdate()
+        || isReferralCreditFlip()
+        || isReferrerBonusIncrement()
+        || isBonusConsumption();
+
+      allow delete: if false;
+
+      function unchangedExcept(fields) {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+      }
+
+      // Referred student's own browser increments its cumulative usage by 1
+      // minute per heartbeat tick.
+      function isHeartbeatUpdate() {
+        return unchangedExcept(['cumulativeUsageMinutes'])
+          && request.resource.data.cumulativeUsageMinutes == resource.data.cumulativeUsageMinutes + 1;
+      }
+
+      // A genuine new sign-in session (not a same-session reload).
+      function isNewSessionUpdate() {
+        return unchangedExcept(['distinctSessionCount', 'lastSessionId'])
+          && request.resource.data.distinctSessionCount == resource.data.distinctSessionCount + 1
+          && request.resource.data.lastSessionId != resource.data.lastSessionId;
+      }
+
+      // Step 1 of crediting: referralCredited can only flip false -> true once,
+      // and only once real eligibility (re-derived here, not trusted from the
+      // client) is already true.
+      function isReferralCreditFlip() {
+        return unchangedExcept(['referralCredited'])
+          && resource.data.referralCredited == false
+          && request.resource.data.referralCredited == true
+          && resource.data.referredBy is string
+          && resource.data.cumulativeUsageMinutes >= 30
+          && resource.data.distinctSessionCount >= 2;
+      }
+
+      // Step 2 of crediting: the referrer's bonus can only grow by exactly
+      // +5 minutes / +1 lifetime count, tied to one specific referred student
+      // who (a) points back at this referrer, (b) is already genuinely
+      // credited (step 1 already committed), and (c) has not been used for a
+      // payout before (replay guard via creditedReferralIds).
+      function isReferrerBonusIncrement() {
+        let referredId = request.resource.data.creditedReferralIds[request.resource.data.creditedReferralIds.size() - 1];
+        let referred = get(/databases/$(database)/documents/students/$(referredId));
+        return unchangedExcept(['pendingBonusMinutes', 'totalReferralBonusesEarned', 'creditedReferralIds'])
+          && request.resource.data.pendingBonusMinutes == resource.data.pendingBonusMinutes + 5
+          && request.resource.data.totalReferralBonusesEarned == resource.data.totalReferralBonusesEarned + 1
+          && !(referredId in resource.data.creditedReferralIds)
+          && request.resource.data.creditedReferralIds == resource.data.creditedReferralIds.concat([referredId])
+          && referred.data.referredBy == studentId
+          && referred.data.referralCredited == true;
+      }
+
+      // The one-time bonus is consumed (reset to 0) after the referrer's next
+      // Pong session ends.
+      function isBonusConsumption() {
+        return unchangedExcept(['pendingBonusMinutes'])
+          && resource.data.pendingBonusMinutes > 0
+          && request.resource.data.pendingBonusMinutes == 0;
+      }
+    }
+
+    match /usageLog/{entryId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAll(
+          ['email', 'firstName', 'lastName', 'grade', 'action', 'usageMinutes',
+           'timestamp', 'dayOf', 'weekOf', 'monthOf'])
+        && request.resource.data.usageMinutes is number
+        && request.resource.data.usageMinutes >= 0;
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}

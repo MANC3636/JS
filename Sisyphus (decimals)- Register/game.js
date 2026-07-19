@@ -1,8 +1,16 @@
 // game.js — Pong game controller. Inject DOM elements and sound functions.
 import { sndWallHit, sndPlayerHit, sndAiHit, sndGameOver } from './sound.js';
-import { getFlashMode } from './export.js';
+import { getFlashMode } from './csv_utils.js';
 
-export function createGameController({ canvas, scoreDisplay, timerDisplay, onEnd, getFlashPreference = null } = {}) {
+// Pure helper so the bonus-duration math is unit-testable without a <canvas>/DOM.
+export function computeSessionDuration(baseSeconds, bonusMinutes) {
+  return baseSeconds + (Number(bonusMinutes) || 0) * 60;
+}
+
+export function createGameController({
+  canvas, scoreDisplay, timerDisplay, onEnd, getFlashPreference = null,
+  getBonusMinutes = null, onBonusConsumed = null,
+} = {}) {
   const ctx = canvas.getContext('2d');
   let gameActive = false;
   let currentScore = 0;
@@ -10,6 +18,7 @@ export function createGameController({ canvas, scoreDisplay, timerDisplay, onEnd
   let remainingSeconds = gameDuration;
   let animationFrameId = null;
   let gameTimer = null;
+  let consumedBonusMinutes = 0;
 
   let ball = null;
   let playerPaddle = null;
@@ -219,6 +228,10 @@ export function createGameController({ canvas, scoreDisplay, timerDisplay, onEnd
     clearTimerWarning();
     sndGameOver();
     if (onEnd) onEnd();
+    if (consumedBonusMinutes > 0 && typeof onBonusConsumed === 'function') {
+      onBonusConsumed(consumedBonusMinutes);
+      consumedBonusMinutes = 0; // one-time bonus is spent; guard against double-firing
+    }
     remainingSeconds = gameDuration;
     if (timerDisplay) timerDisplay.textContent = formatTimer(remainingSeconds);
     if (scoreDisplay) scoreDisplay.textContent = `Score: ${currentScore}`;
@@ -231,7 +244,9 @@ export function createGameController({ canvas, scoreDisplay, timerDisplay, onEnd
     const stored = Number(sessionStorage.getItem('sisyphusGameScore')) || 0;
     currentScore = stored;
     if (scoreDisplay) scoreDisplay.textContent = `Score: ${currentScore}`;
-    remainingSeconds = gameDuration;
+    const bonus = typeof getBonusMinutes === 'function' ? (Number(getBonusMinutes()) || 0) : 0;
+    consumedBonusMinutes = bonus; // read once per call — the "one-time" part
+    remainingSeconds = computeSessionDuration(gameDuration, bonus);
     clearTimerWarning();
     if (timerDisplay) timerDisplay.textContent = formatTimer(remainingSeconds);
     initGameObjects();
@@ -261,4 +276,4 @@ export function createGameController({ canvas, scoreDisplay, timerDisplay, onEnd
   return { startGame, endGame, setPaddlePosition, setGhostLevel };
 }
 
-export default { createGameController };
+export default { createGameController, computeSessionDuration };

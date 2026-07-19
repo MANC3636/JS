@@ -1,117 +1,81 @@
-// export.js — storage helpers and CSV export utilities (no DOM operations)
-export function getStoredStudents() {
-  const raw = localStorage.getItem('sisyphusStudents');
-  return raw ? JSON.parse(raw) : [];
+// export.js — Firestore storage helpers (no DOM operations)
+import {
+  collection, getDocs, addDoc, query, where, limit, serverTimestamp,
+} from 'https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js';
+import { db } from './firebase.js';
+import {
+  getWeekLabel, buildCsvRow, getFlashMode,
+  createStudentsCsvBlob, createUsageCsvBlob, createUsageReportCsvBlob, getWeeklyReportSchedulerDesign,
+} from './csv_utils.js';
+
+// Students and usage log now live in Firestore (not localStorage) so referral
+// crediting can see activity that happened on a different student's device.
+// These are per-document reads/writes, not read-all-mutate-write-all, to avoid
+// clobbering concurrent writes from other students' browsers.
+export async function getStoredStudents() {
+  const snap = await getDocs(collection(db, 'students'));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
-export function saveStoredStudents(students) {
-  localStorage.setItem('sisyphusStudents', JSON.stringify(students));
+export async function findStudentByEmailQuery(email) {
+  const q = query(collection(db, 'students'), where('email', '==', email), limit(1));
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+  const found = snap.docs[0];
+  return { id: found.id, ...found.data() };
 }
 
-export function getUsageLog() {
-  const raw = localStorage.getItem('sisyphusUsageLog');
-  return raw ? JSON.parse(raw) : [];
-}
-
-export function saveUsageLog(logs) {
-  localStorage.setItem('sisyphusUsageLog', JSON.stringify(logs));
-}
-
-export function getWeekLabel(date) {
-  const copy = new Date(date);
-  const day = copy.getDay();
-  const diff = (day + 6) % 7;
-  copy.setDate(copy.getDate() - diff);
-  copy.setHours(0, 0, 0, 0);
-  return copy.toISOString().slice(0, 10);
-}
-
-export function buildCsvRow(row) {
-  return row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(',');
-}
-
-export function getFlashMode(student, preference = null) {
-  if (student?.hasEpilepsy) return 'solid';
-
-  const storedPreference = preference
-    || (typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('sisyphusFlash') : null)
-    || (typeof localStorage !== 'undefined' ? localStorage.getItem('sisyphusFlash') : null)
-    || 'flash';
-
-  return storedPreference === 'solid' ? 'solid' : 'flash';
-}
-
-export function createStudentsCsvBlob(students) {
-  const header = ['First Name', 'Last Name', 'Grade', 'Email'];
-  const rows = [header, ...students.map((student) => [student.firstName, student.lastName, student.grade, student.email])];
-  const csvContent = rows.map(buildCsvRow).join('\r\n');
-  return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-}
-
-export function createUsageCsvBlob(logs) {
-  const header = ['Timestamp', 'Day', 'Week Of', 'Month', 'Usage Minutes', 'First Name', 'Last Name', 'Grade', 'Email', 'Action'];
-  const rows = [header, ...logs.map((entry) => [
-    entry.timestamp || '',
-    entry.dayOf || '',
-    entry.weekOf || '',
-    entry.monthOf || '',
-    entry.usageMinutes,
-    entry.firstName,
-    entry.lastName,
-    entry.grade,
-    entry.email,
-    entry.action,
-  ])];
-  const csvContent = rows.map(buildCsvRow).join('\r\n');
-  return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-}
-
-export function createUsageReportCsvBlob(rows) {
-  const header = ['Timestamp', 'Day', 'Week Of', 'Month', 'Usage Minutes', 'First Name', 'Last Name', 'Grade', 'Email', 'Action'];
-  const csvRows = [header, ...rows.map((entry) => [
-    entry.timestamp || '',
-    entry.dayOf || '',
-    entry.weekOf || '',
-    entry.monthOf || '',
-    entry.usageMinutes,
-    entry.firstName,
-    entry.lastName,
-    entry.grade,
-    entry.email,
-    entry.action,
-  ])];
-  const csvContent = csvRows.map(buildCsvRow).join('\r\n');
-  return new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-}
-
-export function getWeeklyReportSchedulerDesign() {
+export async function addStudentDoc(studentData) {
+  const docRef = await addDoc(collection(db, 'students'), {
+    firstName: studentData.firstName,
+    lastName: studentData.lastName,
+    grade: studentData.grade,
+    email: studentData.email,
+    hasEpilepsy: Boolean(studentData.hasEpilepsy),
+    referredBy: studentData.referredBy || null,
+    referralCredited: false,
+    cumulativeUsageMinutes: 0,
+    distinctSessionCount: 0,
+    lastSessionId: null,
+    pendingBonusMinutes: 0,
+    totalReferralBonusesEarned: 0,
+    creditedReferralIds: [],
+    createdAt: serverTimestamp(),
+  });
   return {
-    name: 'Weekly Student Registry Report',
-    schedule: {
-      frequency: 'weekly',
-      dayOfWeek: 'Monday',
-      time: '09:00',
-      timezone: 'local',
-    },
-    export: {
-      format: 'csv',
-      filename: 'student_registry.csv',
-      fields: ['First Name', 'Last Name', 'Grade', 'Email'],
-    },
-    delivery: {
-      method: 'email',
-      recipient: 'ttyson@blackstudentfund.org',
-      subject: 'Weekly Student Registry Report',
-    },
-    notes: [
-      'Requires a backend or server-side scheduler.',
-      'The scheduler should read the stored student registry, generate the CSV, and email it weekly.',
-      'If email delivery is not available, the scheduler can upload the report to secure cloud storage and notify the recipient.',
-    ],
+    id: docRef.id,
+    firstName: studentData.firstName,
+    lastName: studentData.lastName,
+    grade: studentData.grade,
+    email: studentData.email,
+    hasEpilepsy: Boolean(studentData.hasEpilepsy),
+    referredBy: studentData.referredBy || null,
+    referralCredited: false,
+    cumulativeUsageMinutes: 0,
+    distinctSessionCount: 0,
+    lastSessionId: null,
+    pendingBonusMinutes: 0,
+    totalReferralBonusesEarned: 0,
+    creditedReferralIds: [],
   };
 }
 
+export async function getUsageLog() {
+  const snap = await getDocs(collection(db, 'usageLog'));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+export async function addUsageLogEntry(entry) {
+  await addDoc(collection(db, 'usageLog'), entry);
+}
+
+export {
+  getWeekLabel, buildCsvRow, getFlashMode,
+  createStudentsCsvBlob, createUsageCsvBlob, createUsageReportCsvBlob, getWeeklyReportSchedulerDesign,
+};
+
 export default {
-  getStoredStudents, saveStoredStudents, getUsageLog, saveUsageLog, getWeekLabel, buildCsvRow, getFlashMode,
+  getStoredStudents, findStudentByEmailQuery, addStudentDoc, getUsageLog, addUsageLogEntry,
+  getWeekLabel, buildCsvRow, getFlashMode,
   createStudentsCsvBlob, createUsageCsvBlob, createUsageReportCsvBlob, getWeeklyReportSchedulerDesign,
 };

@@ -5,22 +5,20 @@ export function normalizeEmail(email) {
   return email.trim().toLowerCase();
 }
 
-export function getStoredStudents() {
+export async function getStoredStudents() {
   return ex.getStoredStudents();
 }
 
-export function saveStoredStudents(students) {
-  return ex.saveStoredStudents(students);
+export async function findStudentByEmail(email) {
+  return ex.findStudentByEmailQuery(normalizeEmail(email));
 }
 
-export function findStudentByEmail(email) {
-  const students = getStoredStudents();
-  return students.find((s) => normalizeEmail(s.email) === normalizeEmail(email));
+export async function registerStudent(studentData) {
+  return ex.addStudentDoc({ ...studentData, email: normalizeEmail(studentData.email) });
 }
 
-export function logStudentUsage(student, action, sessionStartTimestamp = null) {
+export async function logStudentUsage(student, action, sessionStartTimestamp = null) {
   if (!student) return;
-  const logs = ex.getUsageLog();
   const now = new Date();
   const usageMinutes = sessionStartTimestamp
     ? Math.max(0, Math.round((Date.now() - sessionStartTimestamp) / 60000))
@@ -28,7 +26,7 @@ export function logStudentUsage(student, action, sessionStartTimestamp = null) {
   const dayOf = now.toISOString().slice(0, 10);
   const monthOf = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-  logs.push({
+  await ex.addUsageLogEntry({
     email: normalizeEmail(student.email),
     firstName: student.firstName,
     lastName: student.lastName,
@@ -40,7 +38,8 @@ export function logStudentUsage(student, action, sessionStartTimestamp = null) {
     weekOf: ex.getWeekLabel(now),
     monthOf,
   });
-  ex.saveUsageLog(logs);
 }
 
-export default { normalizeEmail, getStoredStudents, saveStoredStudents, findStudentByEmail, logStudentUsage };
+export default {
+  normalizeEmail, getStoredStudents, findStudentByEmail, registerStudent, logStudentUsage,
+};
