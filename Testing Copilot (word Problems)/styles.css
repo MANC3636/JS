@@ -193,6 +193,28 @@ button:hover {
   color: var(--muted);
 }
 
+.game-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  margin: 16px auto 0;
+}
+
+.control-button {
+  min-width: 56px;
+  height: 52px;
+  padding: 8px;
+  border-radius: 10px;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.control-button[data-control="Space"] {
+  min-width: 84px;
+}
+
 @media (max-width: 600px) {
   .game-header {
     flex-direction: column;

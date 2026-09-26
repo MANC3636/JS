@@ -123,6 +123,15 @@
       </div>
       <canvas id="game-canvas" width="600" height="400"></canvas>
       <div class="instructions" id="game-instructions"></div>
+      <div id="game-controls" class="game-controls" aria-label="Game controls">
+        <button type="button" class="control-button" data-control="ArrowUp" aria-label="Move up">&#9650;</button>
+        <button type="button" class="control-button" data-control="ArrowLeft" aria-label="Move left">&#9664;</button>
+        <button type="button" class="control-button" data-control="ArrowDown" aria-label="Move down">&#9660;</button>
+        <button type="button" class="control-button" data-control="ArrowRight" aria-label="Move right">&#9654;</button>
+        <button type="button" class="control-button" data-control="w" aria-label="Move left paddle up">W</button>
+        <button type="button" class="control-button" data-control="s" aria-label="Move left paddle down">S</button>
+        <button type="button" class="control-button hidden" data-control="Space" aria-label="Shoot">Shoot</button>
+      </div>
       <button id="snake-toggle-btn" class="hidden">Start</button>
     </section>
   </div>

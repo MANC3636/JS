@@ -11,6 +11,7 @@ const gameCanvas = document.getElementById('game-canvas');
 const gameTitle = document.getElementById('game-title');
 const timerLabel = document.getElementById('timer');
 const gameInstructions = document.getElementById('game-instructions');
+const gameControls = document.getElementById('game-controls');
 const snakeToggleBtn = document.getElementById('snake-toggle-btn');
 const successSound = document.getElementById('success-sound');
 const failureSound = document.getElementById('failure-sound');
@@ -36,6 +37,7 @@ let currentGame = null;
 let lastTime = null;
 let animationId = null;
 let gameEndTime = null;
+let lastProgressSave = 0;
 
 function randomNumber(max) {
   return Math.floor(Math.random() * max) + 1;
@@ -242,6 +244,7 @@ function formatTime(ms) {
 }
 
 function stopGame() {
+  saveCurrentGameProgress();
   if (animationId) {
     cancelAnimationFrame(animationId);
     animationId = null;
@@ -354,6 +357,7 @@ function activateGame(gameName) {
   currentGame = gameName;
   lastTime = null;
   showScreen(gameScreen);
+  configureGameControls(gameName);
   if (gameName === 'pong') {
     gameTitle.textContent = 'Pong';
     gameInstructions.textContent = 'Use W/S to move left paddle and Up/Down arrows to move right paddle.';
@@ -390,6 +394,8 @@ function activateGame(gameName) {
     startCountdown(120000);
     initPacman();
   }
+  restoreGameProgress(gameName);
+  drawCurrentGame();
 }
 
 submitBtn.addEventListener('click', () => {
@@ -494,6 +500,114 @@ const pacmanState = {
   gridHeight: 20,
   enemies: [],
 };
+
+function gameProgressKey() {
+  const userId = localStorage.getItem('wc_current_user') || 'guest';
+  return `wc_game_progress_${userId}`;
+}
+
+function getSavedGameProgress() {
+  try {
+    return JSON.parse(sessionStorage.getItem(gameProgressKey()) || '{}');
+  } catch (error) {
+    return {};
+  }
+}
+
+function saveCurrentGameProgress() {
+  if (!currentGame) return;
+  const progress = getSavedGameProgress();
+  const states = {
+    pong: pongState,
+    snake: snakeState,
+    'space-invader': invaderState,
+    'flappy-bird': flappyState,
+    pacman: pacmanState,
+  };
+  try {
+    progress[currentGame] = JSON.parse(JSON.stringify(states[currentGame]));
+    sessionStorage.setItem(gameProgressKey(), JSON.stringify(progress));
+  } catch (error) {
+    // Storage may be unavailable or full; the game still works without saving.
+  }
+}
+
+function restoreGameProgress(gameName) {
+  const savedState = getSavedGameProgress()[gameName];
+  if (!savedState || savedState.alive === false) return;
+  const states = {
+    pong: pongState,
+    snake: snakeState,
+    'space-invader': invaderState,
+    'flappy-bird': flappyState,
+    pacman: pacmanState,
+  };
+  Object.assign(states[gameName], savedState);
+  if (gameName === 'pong') {
+    pongState.leftSpeed = 0;
+    pongState.rightSpeed = 0;
+  }
+  if (gameName === 'snake') {
+    snakeState.alive = true;
+    snakeState.frameCounter = 0;
+  }
+}
+
+function drawCurrentGame() {
+  if (currentGame === 'pong') drawPong();
+  if (currentGame === 'snake') drawSnake();
+  if (currentGame === 'space-invader') drawSpaceInvader();
+  if (currentGame === 'flappy-bird') drawFlappyBird();
+  if (currentGame === 'pacman') drawPacman();
+}
+
+function configureGameControls(gameName) {
+  const controlsByGame = {
+    pong: ['ArrowUp', 'ArrowDown', 'w', 's'],
+    snake: ['ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight'],
+    'space-invader': ['ArrowLeft', 'ArrowRight', 'Space'],
+    'flappy-bird': ['ArrowUp'],
+    pacman: ['ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight'],
+  };
+  const controls = controlsByGame[gameName] || [];
+
+  gameControls.querySelectorAll('.control-button').forEach((button) => {
+    const control = button.dataset.control;
+    button.classList.toggle('hidden', !controls.includes(control));
+    if (control === 'ArrowUp' && gameName === 'flappy-bird') {
+      button.setAttribute('aria-label', 'Flap');
+    } else if (control === 'ArrowUp' || control === 'ArrowDown') {
+      button.setAttribute('aria-label', gameName === 'pong'
+        ? `Move right paddle ${control === 'ArrowUp' ? 'up' : 'down'}`
+        : `Move ${control === 'ArrowUp' ? 'up' : 'down'}`);
+    }
+  });
+}
+
+function handleMobileControl(control) {
+  const event = { key: control, code: control };
+  if (currentGame === 'pong') pongKeyDown(event);
+  if (currentGame === 'snake') snakeKeyDown(event);
+  if (currentGame === 'space-invader') spaceInvaderKeyDown(event);
+  if (currentGame === 'flappy-bird') flappyKeyDown(event);
+  if (currentGame === 'pacman') pacmanKeyDown(event);
+}
+
+function releaseMobileControl(control) {
+  if (currentGame === 'pong') pongKeyUp({ key: control });
+  if (currentGame === 'space-invader') spaceInvaderKeyUp({ key: control });
+}
+
+gameControls.querySelectorAll('.control-button').forEach((button) => {
+  const control = button.dataset.control;
+  button.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    handleMobileControl(control);
+  });
+  button.addEventListener('pointerup', () => releaseMobileControl(control));
+  button.addEventListener('pointercancel', () => releaseMobileControl(control));
+  button.addEventListener('pointerleave', () => releaseMobileControl(control));
+});
 
 function initPong() {
   Object.assign(pongState, {
@@ -1405,6 +1519,10 @@ function runGameLoop(timestamp) {
   lastTime = timestamp;
 
   if (!currentGame) return;
+  if (timestamp - lastProgressSave >= 500) {
+    saveCurrentGameProgress();
+    lastProgressSave = timestamp;
+  }
   if (currentGame === 'pong') {
     updatePong();
     drawPong();
